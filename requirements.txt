@@ -1,4 +1,7 @@
 flask
 flask_sqlalchemy
 requests
-tk
+pandas
+numpy
+matplotlib
+scipy
