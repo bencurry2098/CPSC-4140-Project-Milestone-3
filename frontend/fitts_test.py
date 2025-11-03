@@ -3,6 +3,7 @@ from tkinter import messagebox
 import random, math, time, csv, os
 from frontend.api_client import upload_test
 from app.config import Config
+from PIL import Image, ImageTk, ImageDraw
 
 # ensure a /data directory exists at project root
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
@@ -25,8 +26,18 @@ def run_fitts_test(root, user_id, mode="normal"):
     prev_click = [mid_x, mid_y]
 
     # impairment simulation parameters
-    delay_ms = 150 if mode == "simulated" else 0
-    jitter = 8 if mode == "simulated" else 0
+    if mode in ["normal", "simulated", "mild", "moderate", "severe"]:
+        levels = {
+            "normal":  {"delay_ms": 0, "jitter": 0},
+            "simulated": {"delay_ms": 150, "jitter": 8},  # legacy
+            "mild": {"delay_ms": 100, "jitter": 5},
+            "moderate": {"delay_ms": 300, "jitter": 10},
+            "severe": {"delay_ms": 600, "jitter": 20},
+        }
+        params = levels.get(mode, levels["normal"])
+        delay_ms, jitter = params["delay_ms"], params["jitter"]
+    else:
+        delay_ms, jitter = 0, 0
 
     # countdown before test
     def start_countdown():
@@ -53,11 +64,50 @@ def run_fitts_test(root, user_id, mode="normal"):
         target_radius = random.randint(Config.MIN_TARGET_RADIUS, Config.MAX_TARGET_RADIUS)
         cx = random.randint(target_radius, W - target_radius)
         cy = random.randint(target_radius, H - target_radius)
+
         target_id = canvas.create_oval(cx - target_radius, cy - target_radius,
                                        cx + target_radius, cy + target_radius,
                                        fill="blue", outline="")
         target_center = (cx, cy)
         start_time = time.time()
+
+        # add blur effect
+        # --- create a transparent overlay image ---
+        if jitter > 0:
+            blur_count = max(2, jitter // 3)
+
+            # Create a transparent RGBA image same size as canvas
+            overlay = Image.new("RGBA", (W, H), (255, 255, 255, 0))
+            draw = ImageDraw.Draw(overlay)
+
+            for _ in range(blur_count):
+                offset_x = random.randint(-target_radius, target_radius)
+                offset_y = random.randint(-target_radius, target_radius)
+                blur_r = int(target_radius * random.uniform(0.8, 1.2))
+
+                # Random pale color with transparency (alpha 50–120)
+                color = (
+                    random.randint(220, 255),
+                    random.randint(220, 255),
+                    random.randint(220, 255),
+                    random.randint(120, 200)
+                )
+                draw.ellipse(
+                    [
+                        (cx + offset_x) - blur_r,
+                        (cy + offset_y) - blur_r,
+                        (cx + offset_x) + blur_r,
+                        (cy + offset_y) + blur_r,
+                    ],
+                    fill=color,
+                    outline=None
+                )
+
+            # Convert Pillow image to Tk image and display it
+            overlay_tk = ImageTk.PhotoImage(overlay)
+            canvas.overlay_img = overlay_tk  # keep reference so it's not garbage collected
+            canvas.create_image(0, 0, image=overlay_tk, anchor="nw")
+        # ---------
 
     # handle mouse click
     def handle_click(event):

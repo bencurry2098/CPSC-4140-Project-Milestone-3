@@ -42,6 +42,19 @@ def main():
         tk.Button(root, text="Fitts' Law Test (Simulated)",
                   command=lambda: run_fitts_test(root, user_id, mode="simulated"),
                   width=25, height=2).pack(pady=5)
+        # simulation buttons
+        tk.Button(root, text="Fitts' Law Test (Mild)",
+                  command=lambda: run_fitts_test(root, user_id, mode="mild"),
+                  width=25, height=2).pack(pady=5)
+
+        tk.Button(root, text="Fitts' Law Test (Moderate)",
+                  command=lambda: run_fitts_test(root, user_id, mode="moderate"),
+                  width=25, height=2).pack(pady=5)
+
+        tk.Button(root, text="Fitts' Law Test (Severe)",
+                  command=lambda: run_fitts_test(root, user_id, mode="severe"),
+                  width=25, height=2).pack(pady=5)
+        # ------------------
 
         tk.Button(root, text="Alcohol Knowledge Quiz",
                   command=lambda: run_quiz(root, user_id),
