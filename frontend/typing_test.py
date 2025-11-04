@@ -1,40 +1,45 @@
 import tkinter as tk
 from tkinter import messagebox
-import random, math, time, csv, os
-from frontend.api_client import upload_test
-from app.config import Config
-from PIL import Image, ImageTk, ImageDraw
+import random, time
 
 def run_typing_test(root, user_id, mode="normal"):
     win = tk.Toplevel(root)
     win.title(f"Typing Test ({mode.capitalize()})")
 
-    words = ["coordination", "reflex", "motor", "balance", "focus", "attention"]
-    text = " ".join(random.choices(words, k=8))
+    # Word pool: all words 8 letters or less
+    words = ["coord", "reflex", "motor", "balance", "focus", "attention", 
+             "hand", "foot", "eye", "leg", "arm", "brain"]
+
+    # Pick 6 words at random for the test
+    text = " ".join(random.choices(words, k=6))
     tk.Label(win, text=text, font=("Arial", 14)).pack(pady=10)
+
     entry = tk.Entry(win, font=("Arial", 14), width=50)
     entry.pack(pady=10)
+    entry.focus_set()
     start = time.time()
 
-    levels = {
-        "normal": {"delay": 0, "error_chance": 0},
-        "mild": {"delay": 50, "error_chance": 0.05},
-        "moderate": {"delay": 100, "error_chance": 0.1},
-        "severe": {"delay": 200, "error_chance": 0.2},
+    # Set replacement chance based on severity
+    error_chances = {
+        "normal": 0.0,
+        "mild": 0.1,       # small chance
+        "moderate": 0.2,   # medium chance
+        "severe": 0.4      # high chance
     }
-    delay, error_chance = levels.get(mode, levels["normal"]).values()
+    error_chance = error_chances.get(mode, 0.0)
 
     def on_key(event):
-        if delay:
-            win.after(delay)
-        if random.random() < error_chance:
+        # Only replace normal letters (ignore space, backspace, etc.)
+        if event.char.isalpha() and random.random() < error_chance:
             entry.insert(tk.END, random.choice("abcdefghijklmnopqrstuvwxyz"))
-            return "break"
+            return "break"  # prevent the original key from registering
 
     def finish():
         elapsed = time.time() - start
-        typed = entry.get().strip()
-        accuracy = sum(a == b for a, b in zip(text, typed)) / len(text) * 100
+        typed = entry.get()
+        correct_chars = sum(a == b for a, b in zip(text, typed))
+        total_chars = max(len(text), len(typed))
+        accuracy = (correct_chars / total_chars) * 100
         messagebox.showinfo("Result", f"Accuracy: {accuracy:.1f}%\nTime: {elapsed:.1f}s")
         win.destroy()
 
