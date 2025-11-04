@@ -1,127 +1,153 @@
 """
 analyze_results.py
 ------------------
-Analyzes data from the Fitts' Law experiment and visualizes how movement time (MT)
-depends on the index of difficulty (ID).
+Analyzes results from experiment data in /data:
+    • Fitts' Law (movement time vs. index of difficulty)
+    • Quiz Results (knowledge score)
+    • Tracking Test (mouse tracking accuracy) — placeholder
+    • Balance Test (stability accuracy) — placeholder
 
-Enhancements:
-    • Reads data directly from /data/fitts_normal.csv or /data/fitts_simulated.csv.
-    • Removes outliers using IQR and standard deviation.
-    • Averages trials with the same Index of Difficulty.
-    • Saves the regression plot to /data/fitts_plot.png.
+Usage:
+    python analyze_results.py <choice>
+
+Choices:
+    fitts      - Analyze Fitts' Law data
+    quiz       - Analyze Quiz results
+    tracking   - Placeholder for tracking data
+    balance    - Placeholder for balance data
+    all        - Analyze all available types
 """
 
+import os
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-import os
 
-# -------------------------------------------------------------------
-# Step 1: Locate and load experimental results
-# -------------------------------------------------------------------
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# You can switch to "fitts_simulated.csv" if you want to analyze the simulated dataset.
-csv_file = os.path.join(DATA_DIR, "fitts_normal.csv")
+# -------------------------------------------------------------------
+# Utility helpers
+# -------------------------------------------------------------------
+def list_csv_files():
+    return [f for f in os.listdir(DATA_DIR) if f.endswith(".csv")]
 
-if not os.path.exists(csv_file):
-    raise FileNotFoundError(f"{csv_file} not found. Run a Fitts' Law test first.")
-
-data = pd.read_csv(csv_file)
-
-# Drop invalid or missing rows
-data = data.dropna()
-data = data[(data["Distance (px)"] > 0) & (data["Target Size (px)"] > 0)]
-
-print("Loaded data sample:")
-print(data.head(), "\n")
+def safe_load_csv(filename):
+    try:
+        df = pd.read_csv(os.path.join(DATA_DIR, filename))
+        return df
+    except Exception as e:
+        print(f"Error reading {filename}: {e}")
+        return None
 
 # -------------------------------------------------------------------
-# Step 2: Compute Index of Difficulty (ID)
+# Fitts' Law Analysis
 # -------------------------------------------------------------------
-data["Index of Difficulty (bits)"] = np.log2(2 * data["Distance (px)"] / data["Target Size (px)"] + 1)
+def analyze_fitts(filename):
+    print(f"\n=== Analyzing {filename} (Fitts' Law) ===")
+    df = safe_load_csv(filename)
+    if df is None or len(df) < 2:
+        print("Not enough data.")
+        return
 
-# -------------------------------------------------------------------
-# Step 3: Remove statistical outliers
-# -------------------------------------------------------------------
-q1 = data["Time (ms)"].quantile(0.25)
-q3 = data["Time (ms)"].quantile(0.75)
-iqr = q3 - q1
-lower_bound = q1 - 1.5 * iqr
-upper_bound = q3 + 1.0 * iqr
+    # Drop invalid rows
+    df = df.dropna()
+    df = df[(df["Distance (px)"] > 0) & (df["Target Size (px)"] > 0)]
 
-mean_time = data["Time (ms)"].mean()
-std_time = data["Time (ms)"].std()
-upper_std = mean_time + 2 * std_time
+    # Compute Index of Difficulty
+    df["Index of Difficulty (bits)"] = np.log2(2 * df["Distance (px)"] / df["Target Size (px)"] + 1)
 
-filtered_data = data[
-    (data["Time (ms)"] >= lower_bound) &
-    (data["Time (ms)"] <= min(upper_bound, upper_std))
-]
+    # Remove outliers
+    q1, q3 = df["Time (ms)"].quantile([0.25, 0.75])
+    iqr = q3 - q1
+    lower, upper = q1 - 1.5 * iqr, q3 + 1.0 * iqr
+    mean_t, std_t = df["Time (ms)"].mean(), df["Time (ms)"].std()
+    upper_std = mean_t + 2 * std_t
+    df = df[(df["Time (ms)"] >= lower) & (df["Time (ms)"] <= min(upper, upper_std))]
 
-removed = len(data) - len(filtered_data)
-print(f"Removed {removed} outlier(s) using IQR/std filtering.\n")
-data = filtered_data
+    # Average movement times per ID
+    df["ID_rounded"] = df["Index of Difficulty (bits)"].round(2)
+    avg_df = df.groupby("ID_rounded")["Time (ms)"].mean().reset_index()
+    avg_df.rename(columns={
+        "ID_rounded": "Index of Difficulty (bits)",
+        "Time (ms)": "Avg Movement Time (ms)"
+    }, inplace=True)
 
-# -------------------------------------------------------------------
-# Step 4: Average movement times per unique ID
-# -------------------------------------------------------------------
-data["ID_rounded"] = data["Index of Difficulty (bits)"].round(2)
-avg_data = data.groupby("ID_rounded")["Time (ms)"].mean().reset_index()
-avg_data.rename(columns={
-    "ID_rounded": "Index of Difficulty (bits)",
-    "Time (ms)": "Avg Movement Time (ms)"
-}, inplace=True)
+    # Regression
+    ID, MT = avg_df["Index of Difficulty (bits)"], avg_df["Avg Movement Time (ms)"]
+    slope, intercept, r_value, _, _ = linregress(ID, MT)
+    r2 = r_value ** 2
 
-# -------------------------------------------------------------------
-# Step 5: Linear regression on averaged data
-# -------------------------------------------------------------------
-ID = avg_data["Index of Difficulty (bits)"]
-MT = avg_data["Avg Movement Time (ms)"]
+    print(f"Equation: MT = {intercept:.2f} + {slope:.2f} * ID")
+    print(f"R² = {r2:.3f}")
 
-slope, intercept, r_value, p_value, std_err = linregress(ID, MT)
-r_squared = r_value ** 2
-
-# -------------------------------------------------------------------
-# Step 6: Display regression results
-# -------------------------------------------------------------------
-print("Fitts' Law Regression Results")
-print("-----------------------------")
-print(f"Equation:  MT = {intercept:.2f} + {slope:.2f} * ID")
-print(f"a (intercept): {intercept:.2f} ms")
-print(f"b (slope): {slope:.2f} ms/bit")
-print(f"R² (fit quality): {r_squared:.4f}\n")
-
-if r_squared >= 0.8:
-    print("Strong linear relationship: results strongly support Fitts’ Law.")
-elif r_squared >= 0.5:
-    print("Moderate correlation: results partially support Fitts’ Law.")
-else:
-    print("Weak correlation: data shows remaining variance or inconsistency.")
-print()
+    # Plot
+    plt.figure(figsize=(7, 5))
+    plt.scatter(ID, MT, color="blue", label="Data")
+    plt.plot(ID, intercept + slope * ID, color="red", label="Fit")
+    plt.xlabel("Index of Difficulty  log₂(2A/W + 1)")
+    plt.ylabel("Avg Movement Time (ms)")
+    plt.title(f"Fitts' Law — {filename}")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plot_path = os.path.join(DATA_DIR, f"{filename.replace('.csv','')}_plot.png")
+    plt.savefig(plot_path, dpi=300)
+    plt.close()
+    print(f"Saved plot to {plot_path}")
 
 # -------------------------------------------------------------------
-# Step 7: Plot results
+# Quiz Results Analysis
 # -------------------------------------------------------------------
-plt.figure(figsize=(8, 6))
-plt.scatter(ID, MT, color="blue", label="Averaged Trials")
-plt.plot(ID, intercept + slope * ID, color="red", label="Linear Fit")
+def analyze_quiz():
+    quiz_path = os.path.join(DATA_DIR, "quiz_results.csv")
+    if not os.path.exists(quiz_path):
+        print("\n=== No quiz_results.csv found ===")
+        return
 
-plt.text(min(ID), max(MT)*0.95,
-         f"MT = {intercept:.1f} + {slope:.1f} * ID\nR² = {r_squared:.2f}",
-         color="red", fontsize=10)
+    print("\n=== Analyzing Quiz Results ===")
+    df = pd.read_csv(quiz_path)
+    if "Correct?" not in df.columns:
+        print("Invalid format.")
+        return
 
-plt.xlabel("Index of Difficulty  log₂(2A/W + 1)")
-plt.ylabel("Average Movement Time (ms)")
-plt.title("Fitts' Law: Relationship Between Movement Time and Task Difficulty")
-plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
-plt.grid(True)
-plt.tight_layout()
+    total = len(df)
+    correct = df["Correct?"].sum()
+    accuracy = (correct / total) * 100 if total else 0
 
-plot_path = os.path.join(DATA_DIR, "fitts_plot.png")
-plt.savefig(plot_path, dpi=300)
-plt.show()
+    print(f"Questions answered: {total}")
+    print(f"Correct answers:    {correct}")
+    print(f"Accuracy:           {accuracy:.1f}%")
 
-print(f"Plot saved to: {plot_path}")
+    # Bar chart
+    plt.figure(figsize=(5, 4))
+    df["Correct?"].value_counts().reindex([1, 0]).fillna(0).plot(
+        kind="bar", color=["green", "red"])
+    plt.xticks([0, 1], ["Correct", "Incorrect"], rotation=0)
+    plt.title("Quiz Results Summary")
+    plt.ylabel("Count")
+    plt.tight_layout()
+    quiz_plot = os.path.join(DATA_DIR, "quiz_results_plot.png")
+    plt.savefig(quiz_plot, dpi=300)
+    plt.close()
+    print(f"Saved plot to {quiz_plot}")
+
+
+# -------------------------------------------------------------------
+# Main Driver
+# -------------------------------------------------------------------
+if __name__ == "__main__":
+    choice = sys.argv[1] if len(sys.argv) > 1 else "all"
+    print(f"=== Running Analysis: {choice.upper()} ===")
+
+    if choice in ["fitts", "all"]:
+        for f in list_csv_files():
+            if f.startswith("fitts_") and f.endswith(".csv"):
+                analyze_fitts(f)
+
+    if choice in ["quiz", "all"]:
+        analyze_quiz()
+
+    print("\nAnalysis complete. Plots (if any) saved in /data.")

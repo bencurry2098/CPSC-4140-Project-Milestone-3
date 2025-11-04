@@ -15,9 +15,7 @@ def main():
     root.title("Inebriation Learning Tool")
 
     # main window sizing
-    W, H = 600, 400
-    root.geometry(f"{W}x{H}")
-    root.minsize(W, H)
+    root.geometry(f"{Config.CANVAS_WIDTH}x{Config.CANVAS_HEIGHT}")
 
     tk.Label(root, text="Inebriation Learning Tool", font=("Helvetica", 18, "bold")).pack(pady=20)
     tk.Label(root, text="Enter username to begin:", font=("Helvetica", 12)).pack()
@@ -38,8 +36,7 @@ def main():
 
         tk.Label(root, text=f"Welcome, {username}!", font=("Helvetica", 16, "bold")).pack(pady=20)
 
-                # --- Simulation Buttons with Impairment Level Selection ---
-
+        # --- Simulation Buttons with Impairment Level Selection ---
         def select_impairment(sim_func, root, user_id):
             """Popup window to choose impairment level before running a simulation."""
             level_window = tk.Toplevel(root)
@@ -83,13 +80,35 @@ def main():
                   command=lambda: run_quiz(root, user_id),
                   width=25, height=2).pack(pady=5)
 
-        # --- New: Analyze Results button ---
-        def analyze_results():
-            script = os.path.join(os.path.dirname(os.path.dirname(__file__)), "analyze_results.py")
-            subprocess.run([sys.executable, script], check=False)
+        # =========================================================
+        # Analyze Results (multi-choice window)
+        # =========================================================
+        def open_analysis_menu():
+            """Popup with choices for what type of analysis to run."""
+            menu = tk.Toplevel(root)
+            menu.title("Select Analysis Type")
+            menu.geometry("320x300")
 
-        tk.Button(root, text="Analyze Fitts' Law Results",
-                  command=analyze_results, width=25, height=2).pack(pady=5)
+            tk.Label(menu, text="Choose which results to analyze:", font=("Helvetica", 12, "bold")).pack(pady=10)
+
+            options = [
+                ("Fitts' Law Results", "fitts"),
+                ("Quiz Results", "quiz"),
+                ("All Results", "all")
+            ]
+
+            def run_analysis(choice):
+                menu.destroy()
+                script = os.path.join(os.path.dirname(os.path.dirname(__file__)), "analyze_results.py")
+                subprocess.run([sys.executable, script, choice], check=False)
+
+            for label, key in options:
+                tk.Button(menu, text=label, width=25, height=2,
+                          command=lambda k=key: run_analysis(k)).pack(pady=5)
+
+        tk.Button(root, text="Analyze Results",
+                  command=open_analysis_menu, width=25, height=2).pack(pady=5)
+        # =========================================================
 
         tk.Button(root, text="Exit", command=root.destroy, width=25, height=2).pack(pady=20)
 

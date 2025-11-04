@@ -4,7 +4,7 @@ import time
 import requests
 import os
 
-def wait_for_server(url="http://127.0.0.1:5000", timeout=15):
+def wait_for_server(url="http://127.0.0.1:5000", timeout=30):
     """Wait until Flask backend responds."""
     start = time.time()
     while time.time() - start < timeout:
@@ -34,7 +34,7 @@ def run_all():
         backend.terminate()
         return
     print("Backend ready.")
-
+    print("Starting frontend...")
     # Start frontend GUI
     try:
         subprocess.run([sys.executable, "-m", "frontend.main"], cwd=base)
