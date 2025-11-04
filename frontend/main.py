@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 from frontend.fitts_test import run_fitts_test
+from frontend.tracking_test import run_target_tracking
+from frontend.balance_test import run_balance_game
+from frontend.typing_test import run_typing_test
 from frontend.quiz import run_quiz
 from frontend.api_client import register_user
 from app.config import Config
@@ -35,24 +38,44 @@ def main():
 
         tk.Label(root, text=f"Welcome, {username}!", font=("Helvetica", 16, "bold")).pack(pady=20)
 
-        tk.Button(root, text="Fitts' Law Test (Normal)",
-                  command=lambda: run_fitts_test(root, user_id, mode="normal"),
+                # --- Simulation Buttons with Impairment Level Selection ---
+
+        def select_impairment(sim_func, root, user_id):
+            """Popup window to choose impairment level before running a simulation."""
+            level_window = tk.Toplevel(root)
+            level_window.title("Select Impairment Level")
+            level_window.geometry("300x250")
+
+            tk.Label(level_window, text="Choose Impairment Level:", font=("Helvetica", 12, "bold")).pack(pady=10)
+            levels = [("None", "normal"), ("Mild", "mild"), ("Moderate", "moderate"), ("Severe", "severe")]
+
+            for label, mode in levels:
+                tk.Button(
+                    level_window,
+                    text=label,
+                    width=15,
+                    command=lambda m=mode: launch_simulation(sim_func, root, user_id, m, level_window)
+                ).pack(pady=5)
+
+        def launch_simulation(sim_func, root, user_id, mode, level_window):
+            level_window.destroy()
+            sim_func(root, user_id, mode)
+
+        # --- Add Simulation Buttons ---
+        tk.Button(root, text="Fitts' Law Test",
+                  command=lambda: select_impairment(run_fitts_test, root, user_id),
                   width=25, height=2).pack(pady=5)
 
-        tk.Button(root, text="Fitts' Law Test (Simulated)",
-                  command=lambda: run_fitts_test(root, user_id, mode="simulated"),
-                  width=25, height=2).pack(pady=5)
-        # simulation buttons
-        tk.Button(root, text="Fitts' Law Test (Mild)",
-                  command=lambda: run_fitts_test(root, user_id, mode="mild"),
+        tk.Button(root, text="Target Tracking Test",
+                  command=lambda: select_impairment(run_target_tracking, root, user_id),
                   width=25, height=2).pack(pady=5)
 
-        tk.Button(root, text="Fitts' Law Test (Moderate)",
-                  command=lambda: run_fitts_test(root, user_id, mode="moderate"),
+        tk.Button(root, text="Balance Game",
+                  command=lambda: select_impairment(run_balance_game, root, user_id),
                   width=25, height=2).pack(pady=5)
 
-        tk.Button(root, text="Fitts' Law Test (Severe)",
-                  command=lambda: run_fitts_test(root, user_id, mode="severe"),
+        tk.Button(root, text="Typing Accuracy Test",
+                  command=lambda: select_impairment(run_typing_test, root, user_id),
                   width=25, height=2).pack(pady=5)
         # ------------------
 
