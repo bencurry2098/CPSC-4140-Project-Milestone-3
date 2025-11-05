@@ -1,0 +1,22 @@
+[
+  {
+    "prompt": "At what BAC do most people start to show slowed reaction time?",
+    "choices": ["0.02", "0.05", "0.08"],
+    "answer": 0
+  },
+  {
+    "prompt": "Which organ primarily metabolizes alcohol?",
+    "choices": ["Liver", "Kidneys", "Pancreas"],
+    "answer": 0
+  },
+  {
+    "prompt": "What is the legal BAC limit for driving in most US states?",
+    "choices": ["0.04", "0.08", "0.10"],
+    "answer": 1
+  },
+  {
+    "prompt": "Alcohol affects which of the following first?",
+    "choices": ["Motor skills", "Judgment", "Balance"],
+    "answer": 1
+  }
+]
