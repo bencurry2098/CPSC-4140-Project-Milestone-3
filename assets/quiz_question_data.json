@@ -5,11 +5,6 @@
     "answer": 0
   },
   {
-    "prompt": "Which organ primarily metabolizes alcohol?",
-    "choices": ["Liver", "Kidneys", "Pancreas"],
-    "answer": 0
-  },
-  {
     "prompt": "What is the legal BAC limit for driving in most US states?",
     "choices": ["0.04", "0.08", "0.10"],
     "answer": 1
@@ -17,6 +12,41 @@
   {
     "prompt": "Alcohol affects which of the following first?",
     "choices": ["Motor skills", "Judgment", "Balance"],
+    "answer": 1
+  },
+  {
+    "prompt": "Which age group receives the most DUIs?",
+    "choices": ["30-33", "25-29", "21-24"],
+    "answer": 2
+  },
+  {
+    "prompt": "Do men or women receive more DUIs?",
+    "choices": ["Men", "Women", "Neither, it's about equal"],
+    "answer": 0
+  },
+  {
+    "prompt": "What percent of all US traffic fatalities involve an impaired driver?",
+    "choices": ["10%", "30%", "50%"],
+    "answer": 1
+  },
+  {
+    "prompt": "How much on average does a DUI conviction cost including legal fees?",
+    "choices": ["$1,000", "$5,000", "$10,000"],
+    "answer": 2
+  },
+  {
+    "prompt": "How many people die in the US from alcohol related crashes in the US every day?",
+    "choices": ["8", "19", "27"],
+    "answer": 2
+  },
+  {
+    "prompt": "What fraction of Americans will be involved in a drunk driving crash in their lifetime?",
+    "choices": ["1/5", "1/3", "2/3"],
+    "answer": 2
+  },
+    {
+    "prompt": "What will help you sober up after drinking alcohol?",
+    "choices": ["Coffee", "Time", "Carbohydrates"],
     "answer": 1
   }
 ]
