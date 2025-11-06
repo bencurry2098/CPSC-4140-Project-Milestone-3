@@ -22,80 +22,124 @@ def main():
 
     entry = tk.Entry(root, font=("Helvetica", 12))
     entry.pack(pady=10)
+    entry.focus_set()
 
+    # ---------------------------------------------------------------
+    # Helper: Make buttons focusable and triggerable with Enter
+    # ---------------------------------------------------------------
+    def make_button_accessible(button):
+        button.bind("<Return>", lambda event: button.invoke())
+        button.configure(takefocus=True)
+
+    # ---------------------------------------------------------------
+    # Start session setup
+    # ---------------------------------------------------------------
     def start_session():
         username = entry.get().strip()
         if not username:
             messagebox.showwarning("Missing name", "Please enter a username.")
             return
+
+        # Unbind global Enter to prevent TclError after widgets are destroyed
+        root.unbind("<Return>")
+
         user_id = register_user(username)
 
-        # Clear start widgets and show buttons
+        # Clear login widgets
         for w in root.winfo_children():
             w.destroy()
 
         tk.Label(root, text=f"Welcome, {username}!", font=("Helvetica", 16, "bold")).pack(pady=20)
 
-        # --- Simulation Buttons with Impairment Level Selection ---
+        # ---------------------------------------------------------------
+        # Impairment selection dialog
+        # ---------------------------------------------------------------
         def select_impairment(sim_func, root, user_id):
             """Popup window to choose impairment level before running a simulation."""
             level_window = tk.Toplevel(root)
             level_window.title("Select Impairment Level")
-            level_window.geometry("300x250")
+
+            # --- Center within parent window ---
+            root.update_idletasks()
+            parent_x = root.winfo_x()
+            parent_y = root.winfo_y()
+            parent_w = root.winfo_width()
+            parent_h = root.winfo_height()
+
+            width, height = 320, 280
+            x = parent_x + (parent_w // 2) - (width // 2)
+            y = parent_y + (parent_h // 2) - (height // 2)
+            level_window.geometry(f"{width}x{height}+{x}+{y}")
+            level_window.transient(root)
+            level_window.grab_set()  # Modal dialog
 
             tk.Label(level_window, text="Choose Impairment Level:", font=("Helvetica", 12, "bold")).pack(pady=10)
             levels = [("None", "normal"), ("Mild", "mild"), ("Moderate", "moderate"), ("Severe", "severe")]
 
             for label, mode in levels:
-                tk.Button(
+                btn = tk.Button(
                     level_window,
                     text=label,
                     width=15,
                     command=lambda m=mode: launch_simulation(sim_func, root, user_id, m, level_window)
-                ).pack(pady=5)
+                )
+                btn.pack(pady=5)
+                make_button_accessible(btn)
+
+                # --- Photosensitive warning only for Target Tracking (severe) ---
+                if mode == "severe" and sim_func == run_target_tracking:
+                    tk.Label(
+                        level_window,
+                        text="⚠ Warning: This mode includes rapid movement and flashing.\n"
+                             "It may trigger seizures in photosensitive individuals.",
+                        fg="red",
+                        font=("Helvetica", 9, "italic"),
+                        wraplength=280,
+                        justify="left"
+                    ).pack(pady=(0, 10))
 
         def launch_simulation(sim_func, root, user_id, mode, level_window):
             level_window.destroy()
             sim_func(root, user_id, mode)
 
-        # --- Add Simulation Buttons ---
-        tk.Button(root, text="Fitts' Law Test",
-                  command=lambda: select_impairment(run_fitts_test, root, user_id),
-                  width=25, height=2).pack(pady=5)
+        # ---------------------------------------------------------------
+        # Button factory
+        # ---------------------------------------------------------------
+        def create_button(label, command):
+            btn = tk.Button(root, text=label, command=command, width=25, height=2)
+            btn.pack(pady=5)
+            make_button_accessible(btn)
+            return btn
 
-        tk.Button(root, text="Target Tracking Test",
-                  command=lambda: select_impairment(run_target_tracking, root, user_id),
-                  width=25, height=2).pack(pady=5)
+        # ---------------------------------------------------------------
+        # Simulation/Test Buttons
+        # ---------------------------------------------------------------
+        create_button("Fitts' Law Test", lambda: select_impairment(run_fitts_test, root, user_id))
+        create_button("Target Tracking Test", lambda: select_impairment(run_target_tracking, root, user_id))
+        create_button("Balance Game", lambda: select_impairment(run_balance_game, root, user_id))
+        create_button("Typing Accuracy Test", lambda: select_impairment(run_typing_test, root, user_id))
+        create_button("Alcohol Knowledge Quiz", lambda: run_quiz(root, user_id))
 
-        tk.Button(root, text="Balance Game",
-                  command=lambda: select_impairment(run_balance_game, root, user_id),
-                  width=25, height=2).pack(pady=5)
-
-        tk.Button(root, text="Typing Accuracy Test",
-                  command=lambda: select_impairment(run_typing_test, root, user_id),
-                  width=25, height=2).pack(pady=5)
-        # ------------------
-
-        tk.Button(root, text="Alcohol Knowledge Quiz",
-                  command=lambda: run_quiz(root, user_id),
-                  width=25, height=2).pack(pady=5)
-
-        # =========================================================
-        # Analyze Results (multi-choice window)
-        # =========================================================
+        # ---------------------------------------------------------------
+        # Results analysis menu
+        # ---------------------------------------------------------------
         def open_analysis_menu():
-            """Popup with choices for what type of analysis to run."""
             menu = tk.Toplevel(root)
             menu.title("Select Analysis Type")
-            menu.geometry("320x300")
+
+            # --- Center within parent window ---
+            root.update_idletasks()
+            px, py = root.winfo_x(), root.winfo_y()
+            pw, ph = root.winfo_width(), root.winfo_height()
+            mw, mh = 320, 300
+            x = px + (pw // 2) - (mw // 2)
+            y = py + (ph // 2) - (mh // 2)
+            menu.geometry(f"{mw}x{mh}+{x}+{y}")
+            menu.transient(root)
+            menu.grab_set()
 
             tk.Label(menu, text="Choose which results to analyze:", font=("Helvetica", 12, "bold")).pack(pady=10)
-
-            options = [
-                ("Fitts' Law Results", "fitts"),
-                ("Quiz Results", "quiz"),
-                ("All Results", "all")
-            ]
+            options = [("Fitts' Law Results", "fitts"), ("Quiz Results", "quiz"), ("All Results", "all")]
 
             def run_analysis(choice):
                 menu.destroy()
@@ -103,16 +147,25 @@ def main():
                 subprocess.run([sys.executable, script, choice], check=False)
 
             for label, key in options:
-                tk.Button(menu, text=label, width=25, height=2,
-                          command=lambda k=key: run_analysis(k)).pack(pady=5)
+                btn = tk.Button(menu, text=label, width=25, height=2,
+                                command=lambda k=key: run_analysis(k))
+                btn.pack(pady=5)
+                make_button_accessible(btn)
 
-        tk.Button(root, text="Analyze Results",
-                  command=open_analysis_menu, width=25, height=2).pack(pady=5)
-        # =========================================================
+        create_button("Analyze Results", open_analysis_menu)
+        create_button("Exit", root.destroy)
 
-        tk.Button(root, text="Exit", command=root.destroy, width=25, height=2).pack(pady=20)
+    # ---------------------------------------------------------------
+    # Main screen: Start session controls
+    # ---------------------------------------------------------------
+    start_button = tk.Button(root, text="Start", command=start_session, font=("Helvetica", 12), width=15, height=1)
+    start_button.pack(pady=10)
 
-    tk.Button(root, text="Start", command=start_session, font=("Helvetica", 12), width=15, height=1).pack(pady=10)
+    # Global Enter binding — triggers Start from anywhere
+    def on_enter_key(event):
+        start_session()
+
+    root.bind("<Return>", on_enter_key)
 
     root.mainloop()
 
