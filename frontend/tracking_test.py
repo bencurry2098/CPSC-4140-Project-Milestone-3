@@ -8,51 +8,50 @@ from app.config import Config
 def run_target_tracking(root, user_id, mode="normal"):
     win = tk.Toplevel(root)
     win.title(f"Target Tracking Test ({mode.capitalize()})")
+    win.configure(bg=Config.BG_COLOR)
 
     W, H = Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT
     canvas = tk.Canvas(win, width=W, height=H, bg="white")
     canvas.pack()
 
-    target_radius = 40
-    cx, cy = W // 2, H // 2
-
+    # --- Mode parameters ---
     params = {
         "normal": {"speed": 3, "wobble": 0},
         "mild": {"speed": 3, "wobble": 2},
         "moderate": {"speed": 2.5, "wobble": 5},
         "severe": {"speed": 2, "wobble": 9},
     }
-    settings = params.get(mode, params["normal"])
-    speed, wobble = settings["speed"], settings["wobble"]
+    speed, wobble = params.get(mode, params["normal"]).values()
+
+    target_radius = 40
+    cx, cy = W // 2, H // 2
     dx, dy = random.choice([-1, 1]) * speed, random.choice([-1, 1]) * speed
+    target_id = None  # will be created later
 
-    target_id = canvas.create_oval(cx - target_radius, cy - target_radius,
-                                   cx + target_radius, cy + target_radius,
-                                   fill="red", outline="")
-
-    tracking_start = None
-    mouse_positions = []
-    test_active = False
-
-    duration = Config.TRACKING_TEST_DURATION
-    time_left = duration
-    timer_label = tk.Label(win, text=f"Time: {time_left}", font=("Arial", 12))
+    duration, time_left = Config.TRACKING_TEST_DURATION, Config.TRACKING_TEST_DURATION
+    timer_label = tk.Label(win, text=f"Time: {time_left}", font=("Helvetica", 12, "bold"),
+                           fg=Config.PRIMARY_COLOR, bg=Config.BG_COLOR)
     timer_label.pack(pady=5)
 
+    tracking_start, mouse_positions = None, []
+    test_running = False
+
+    # --- Timer update ---
     def update_timer():
-        nonlocal time_left
-        if not test_active:
+        nonlocal time_left, test_running
+        if not test_running:
             return
         if time_left > 0:
             time_left -= 1
             timer_label.config(text=f"Time: {time_left}")
             win.after(1000, update_timer)
         else:
-            stop_test(auto=True)
+            end_test(auto=True)
 
+    # --- Target motion ---
     def move_target():
-        nonlocal cx, cy, dx, dy
-        if not test_active:
+        nonlocal cx, cy, dx, dy, test_running
+        if not test_running:
             return
 
         cx += dx
@@ -62,25 +61,22 @@ def run_target_tracking(root, user_id, mode="normal"):
         if cy - target_radius <= 0 or cy + target_radius >= H:
             dy *= -1
 
-        wobble_x = random.randint(-wobble, wobble)
-        wobble_y = random.randint(-wobble, wobble)
-        wobble_r = target_radius + random.randint(-wobble // 2, wobble // 2)
+        wx = random.randint(-wobble, wobble)
+        wy = random.randint(-wobble, wobble)
+        wr = target_radius + random.randint(-wobble // 2, wobble // 2)
 
-        canvas.coords(target_id,
-                      cx - wobble_r + wobble_x,
-                      cy - wobble_r + wobble_y,
-                      cx + wobble_r + wobble_x,
-                      cy + wobble_r + wobble_y)
-
+        canvas.coords(target_id, cx - wr + wx, cy - wr + wy, cx + wr + wx, cy + wr + wy)
         win.after(30, move_target)
 
+    # --- Mouse tracking ---
     def track_mouse(event):
-        if tracking_start and test_active:
+        if tracking_start:
             dist = math.dist((event.x, event.y), (cx, cy))
             mouse_positions.append(dist)
 
     canvas.bind("<Motion>", track_mouse)
 
+    # --- Countdown before start ---
     def start_countdown(sec=3):
         canvas.delete("all")
         if sec >= 0:
@@ -89,35 +85,51 @@ def run_target_tracking(root, user_id, mode="normal"):
         else:
             start_test()
 
+    # --- Start test ---
     def start_test():
-        nonlocal tracking_start, target_id, test_active
+        nonlocal tracking_start, target_id, test_running
         canvas.delete("all")
         target_id = canvas.create_oval(cx - target_radius, cy - target_radius,
                                        cx + target_radius, cy + target_radius,
                                        fill="red", outline="")
         tracking_start = time.time()
-        test_active = True
+        test_running = True
         update_timer()
         move_target()
 
-    def stop_test(auto=False):
-        nonlocal test_active
-        if not test_active:
+    # --- End test ---
+    def end_test(auto=False):
+        nonlocal test_running
+        if not tracking_start:
             return
-        test_active = False
-        elapsed = time.time() - tracking_start if tracking_start else 0
+        test_running = False
+        elapsed = time.time() - tracking_start
         avg_distance = sum(mouse_positions) / len(mouse_positions) if mouse_positions else 0
         accuracy = max(0, 100 - min(avg_distance / 5, 100))
         upload_test(user_id, elapsed, accuracy, mode)
-        msg = "Time limit reached!" if auto else "Test completed."
-        messagebox.showinfo("Tracking Results",
-                            f"{msg}\nTime: {elapsed:.1f}s\nAvg distance: {avg_distance:.1f}px")
+
+        msg = "Time up!" if auto else "Test ended."
+        messagebox.showinfo(
+            "Tracking Results",
+            f"{msg}\nTotal time: {elapsed:.1f}s\nAverage distance: {avg_distance:.1f}px"
+        )
+
+        # Show Learn popup before closing
         from frontend.learn_popup import show_learn_popup
-        show_learn_popup(win, "tracking")
+        show_learn_popup(root, "tracking")
 
-    def end_test():
-        stop_test()
-        win.destroy()
+        win.destroy()  # Close test window after showing results
 
-    tk.Button(win, text="End Test", command=end_test).pack(pady=10)
+    # --- Controls ---
+    tk.Button(
+        win,
+        text="End Test",
+        bg=Config.PRIMARY_COLOR,
+        fg="white",
+        font=("Helvetica", 11, "bold"),
+        relief="flat",
+        command=end_test
+    ).pack(pady=10)
+
+    # --- Run ---
     start_countdown()

@@ -17,3 +17,11 @@ class Config:
     TRACKING_TEST_DURATION = 20
     FITTS_TEST_DURATION = 30
     BALANCE_TEST_DURATION = 15
+
+    # --- UI theme ---
+    BG_COLOR = "#f8f9fa"
+    PRIMARY_COLOR = "#1f77b4"
+    ACCENT_COLOR = "#d9534f"
+    FONT_TITLE = ("Helvetica", 18, "bold")
+    FONT_SUBTITLE = ("Helvetica", 14, "bold")
+    FONT_BODY = ("Helvetica", 12)
