@@ -3,6 +3,7 @@ from tkinter import messagebox
 import random, math
 from frontend.api_client import upload_test
 from app.config import Config
+from frontend.learn_popup import show_learn_popup
 
 def run_balance_game(root, user_id, mode="normal"):
     win = tk.Toplevel(root)
@@ -100,22 +101,21 @@ def run_balance_game(root, user_id, mode="normal"):
     # --- Stop and end logic ---
     def fail_game():
         nonlocal running
-        if not running:
-            return
         running = False
         messagebox.showwarning("You fell!", "You lost your balance!")
-        show_end_controls()
+        show_learn_popup(win, "balance")
 
-    def end_game(auto=False):
+
+    def end_game():
         nonlocal running
         if not running:
             return
         running = False
         accuracy = score / 500
-        upload_test(user_id, Config.BALANCE_TEST_DURATION, accuracy, mode)
-        msg = "Time limit reached!" if auto else "Test completed."
-        messagebox.showinfo("Balance Results", f"{msg}\nBalance accuracy: {accuracy:.1f}")
-        show_end_controls()
+        upload_test(user_id, 15, accuracy, mode)
+        messagebox.showinfo("Result", f"Balance accuracy: {accuracy:.1f}")
+        show_learn_popup(win, "balance")
+
 
     # --- Reset game ---
     def reset_game():

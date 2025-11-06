@@ -148,6 +148,8 @@ def run_fitts_test(root, user_id, mode="normal"):
         msg = "Time limit reached!" if auto else "Test completed."
         messagebox.showinfo("Fitts' Law Results",
                             f"{msg}\nAverage time: {avg_time:.2f} ms\nData saved to {csv_name}")
+        from frontend.learn_popup import show_learn_popup
+        show_learn_popup(win, "fitts")
 
     def close_test():
         end_experiment()

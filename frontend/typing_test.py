@@ -73,7 +73,8 @@ def run_typing_test(root, user_id, mode="normal"):
         total_chars = max(len(text), len(typed))
         accuracy = (correct_chars / total_chars) * 100 if total_chars > 0 else 0
         messagebox.showinfo("Result", f"Accuracy: {accuracy:.1f}%\nTime: {elapsed:.1f}s")
-        win.destroy()
+        from frontend.learn_popup import show_learn_popup
+        show_learn_popup(win, "typing")
 
     submit_btn = tk.Button(win, text="Submit", command=finish, font=("Arial", 12))
     submit_btn.pack(pady=10)

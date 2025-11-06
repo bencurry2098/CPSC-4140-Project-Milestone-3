@@ -112,6 +112,8 @@ def run_target_tracking(root, user_id, mode="normal"):
         msg = "Time limit reached!" if auto else "Test completed."
         messagebox.showinfo("Tracking Results",
                             f"{msg}\nTime: {elapsed:.1f}s\nAvg distance: {avg_distance:.1f}px")
+        from frontend.learn_popup import show_learn_popup
+        show_learn_popup(win, "tracking")
 
     def end_test():
         stop_test()
