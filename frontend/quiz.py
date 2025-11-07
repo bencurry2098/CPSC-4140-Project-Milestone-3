@@ -128,6 +128,11 @@ def run_quiz(parent_window, user_id):
         # Scrollable text area for answers
         text_area = ScrolledText(answers_window, wrap="word", font=("Helvetica", 11), width=80, height=25)
         text_area.pack(padx=10, pady=10, fill="both", expand=True)
+        
+        # Tag configurations for color coding
+        text_area.tag_configure("bold", font=("Helvetica", 11, "bold"))
+        text_area.tag_configure("correct", foreground="green")
+        text_area.tag_configure("incorrect", foreground="red")
 
         # Insert each question and answer into the text area
         for i, record in enumerate(results, 1):
@@ -136,9 +141,11 @@ def run_quiz(parent_window, user_id):
             text_area.insert("end", f"Q{i}. {question_text}\n", "bold")
             text_area.insert("end", f"Your answer: {user_answer}\n")
             text_area.insert("end", f"Correct answer: {correct_answer}\n")
-            text_area.insert("end", f"Result: {answer_status}\n\n")
+            if correctness_flag:
+                text_area.insert("end", f"Result: {answer_status}\n\n", "correct")
+            else:
+                text_area.insert("end", f"Result: {answer_status}\n\n", "incorrect")
 
-        text_area.tag_configure("bold", font=("Helvetica", 11, "bold"))
         text_area.config(state="disabled")
 
         # Close button
