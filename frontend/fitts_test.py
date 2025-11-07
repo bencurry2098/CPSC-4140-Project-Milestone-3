@@ -15,11 +15,11 @@ def run_fitts_test(root, user_id, impairment_level="normal"):
     window = tk.Toplevel(root)
     window.title(f"Fitts' Law Test ({impairment_level.capitalize()})")
     window.configure(bg=Config.BG_COLOR)
-
+    # make a box in the window of a fixed size
     canvas_width, canvas_height = Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT
     canvas = tk.Canvas(window, width=canvas_width, height=canvas_height, bg="white", highlightthickness=0)
     canvas.pack()
-
+    # 
     center_x, center_y = canvas_width // 2, canvas_height // 2
     current_trial_index, trial_results = 0, []
     current_target_center, current_target_radius, click_start_time = None, None, None

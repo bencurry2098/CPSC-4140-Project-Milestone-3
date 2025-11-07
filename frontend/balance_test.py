@@ -4,18 +4,20 @@ import random, math, time
 from frontend.api_client import upload_test
 from app.config import Config
 
-
+# runs the game and sets the default impairment level to be normal
 def run_balance_game(root, user_id, mode="normal"):
-    win = tk.Toplevel(root)
-    win.title(f"Balance Game ({mode.capitalize()})")
-    win.configure(bg=Config.BG_COLOR)
-    win.focus_set()
+    # create window for the game
+    balance_window = tk.Toplevel(root)
+    balance_window.title(f"Balance Game ({mode.capitalize()})")
+    balance_window.configure(bg=Config.BG_COLOR)
+    balance_window.focus_set()
 
+    # setup inner box for game
     W, H = 600, 400
-    canvas = tk.Canvas(win, width=W, height=H, bg="white")
+    canvas = tk.Canvas(balance_window, width=W, height=H, bg="white")
     canvas.pack()
 
-    # --- Mode settings ---
+    # impairment levels and effects
     levels = {
         "normal": {"gravity": 0.2, "tap_power": 5},
         "mild": {"gravity": 0.4, "tap_power": 4},
@@ -24,14 +26,14 @@ def run_balance_game(root, user_id, mode="normal"):
     }
     gravity, tap_power = levels.get(mode, levels["normal"]).values()
 
-    # --- Game state ---
+    # setup the game
     angle, score, running = 0, 0, False
     fail_limit = 70
     time_left = Config.BALANCE_TEST_DURATION
 
-    # --- UI ---
+    # create the timer
     timer_label = tk.Label(
-        win,
+        balance_window,
         text=f"Time: {time_left}",
         font=("Helvetica", 12, "bold"),
         fg=Config.PRIMARY_COLOR,
@@ -43,7 +45,7 @@ def run_balance_game(root, user_id, mode="normal"):
     bar_length = 120
     bar = canvas.create_line(W/2, H/2, W/2, H/2 - bar_length, width=10, fill="blue")
 
-    # --- Draw bar ---
+    # creates the bar that will be balanced
     def draw_bar():
         x1, y1 = W/2, H/2
         x2 = x1 + bar_length * math.sin(math.radians(angle))
@@ -53,7 +55,7 @@ def run_balance_game(root, user_id, mode="normal"):
         color = "blue" if tilt < 0.5 else ("orange" if tilt < 0.8 else "red")
         canvas.itemconfig(bar, fill=color)
 
-    # --- Gravity sway ---
+    # Moves the bar depending on where it is leaning
     def sway():
         nonlocal angle, score, running
         if not running:
@@ -65,9 +67,9 @@ def run_balance_game(root, user_id, mode="normal"):
             fail_game()
             return
         score += max(0, fail_limit - abs(angle))
-        win.after(50, sway)
+        balance_window.after(50, sway)
 
-    # --- Player input ---
+    # Makes it so that the left and right arrow keys can move the bar
     def on_press(event):
         nonlocal angle
         if not running:
@@ -81,16 +83,15 @@ def run_balance_game(root, user_id, mode="normal"):
         if abs(angle) >= fail_limit:
             fail_game()
 
-    # --- Fail ---
+    # If bar reaches a certain threshold the player fails
     def fail_game():
         nonlocal running
         if not running:
             return
         running = False
         messagebox.showwarning("You Fell!", "You lost your balance!")
-        # Stop timer updates by setting running=False
 
-    # --- End normally ---
+    # ends the game and opens the learning window
     def end_game():
         nonlocal running
         if not running:
@@ -101,22 +102,22 @@ def run_balance_game(root, user_id, mode="normal"):
         messagebox.showinfo("Balance Results", f"Balance accuracy: {accuracy:.1f}")
         from frontend.learn_popup import show_learn_popup
         show_learn_popup(root, "balance")
-        win.destroy()
+        balance_window.destroy()
 
-    # --- Reset game ---
+    # restarts the game
     def reset_game():
-        win.destroy()
+        balance_window.destroy()
         run_balance_game(root, user_id, mode)
 
-    # --- Controls ---
-    button_frame = tk.Frame(win, bg=Config.BG_COLOR)
+    # buttons for resetting and ending the game
+    button_frame = tk.Frame(balance_window, bg=Config.BG_COLOR)
     button_frame.pack(pady=10)
     tk.Button(button_frame, text="Reset", command=reset_game,
               bg="#6c757d", fg="white", relief="flat", width=10).pack(side="left", padx=5)
     tk.Button(button_frame, text="End Test", command=end_game,
               bg=Config.PRIMARY_COLOR, fg="white", relief="flat", width=10).pack(side="left", padx=5)
 
-    # --- Timer ---
+    # counts the timer down
     def update_timer():
         nonlocal time_left, running
         if not running:
@@ -124,17 +125,18 @@ def run_balance_game(root, user_id, mode="normal"):
         if time_left > 0:
             time_left -= 1
             timer_label.config(text=f"Time: {time_left}")
-            win.after(1000, update_timer)
+            balance_window.after(1000, update_timer)
         else:
             end_game()
 
-    # --- Start game ---
-    win.bind("<KeyPress>", on_press)
+    # start the game
+    balance_window.bind("<KeyPress>", on_press)
     draw_bar()
 
+    # give instructions to the user before the game starts
     messagebox.showinfo("How to Play", "Press the right and left arrow keys to balance the bar")
-    win.lift()
-    win.focus_force()
+    balance_window.lift()
+    balance_window.focus_force()
     running = True
     sway()
     update_timer()
