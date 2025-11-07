@@ -44,7 +44,27 @@ def upload_test():
 @app.route("/upload_quiz", methods=["POST"])
 def upload_quiz():
     data = request.json
-    quiz = QuizResult(**data)
+    quiz = QuizResult(
+        user_id=data["user_id"],
+        score=data["score"],
+        total_questions=data["total_questions"],
+        csv_data=data.get("csv_data", "")
+    )
     db.session.add(quiz)
     db.session.commit()
     return jsonify({"status": "saved"})
+
+# Get quiz CSV data for a user
+@app.route("/quiz_csv/<int:user_id>", methods=["GET"])
+def get_quiz_csv(user_id):
+    quiz = (
+        QuizResult.query.filter_by(user_id=user_id)
+        .order_by(QuizResult.timestamp.desc())
+        .first()
+    )
+    if not quiz or not quiz.csv_data:
+        return jsonify({})
+    return jsonify({
+        "timestamp": quiz.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "csv_data": quiz.csv_data
+    })

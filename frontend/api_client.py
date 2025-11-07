@@ -19,6 +19,24 @@ def upload_test(user_id, avg_time, accuracy, mode):
     requests.post(f"{BASE_URL}/upload_test", json=payload)
 
 # Upload quiz results to the backend
-def upload_quiz(user_id, score, total_questions):
-    payload = {"user_id": user_id, "score": score, "total_questions": total_questions}
+def upload_quiz(user_id, score, total_questions, csv_data=""):
+    payload = {
+        "user_id": user_id,
+        "score": score,
+        "total_questions": total_questions,
+        "csv_data": csv_data
+    }
     requests.post(f"{BASE_URL}/upload_quiz", json=payload)
+
+# Get latest quiz CSV from backend
+def get_quiz_csv(user_id):
+    try:
+        r = requests.get(f"{BASE_URL}/quiz_csv/{user_id}")
+        if r.status_code == 200:
+            return r.json()
+        else:
+            return {}
+    except Exception:
+        from tkinter import messagebox
+        messagebox.showerror("Server Error", "Unable to fetch quiz CSV from backend.")
+        return {}

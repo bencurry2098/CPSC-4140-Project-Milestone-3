@@ -24,6 +24,7 @@ class QuizResult(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     score = db.Column(db.Integer)
     total_questions = db.Column(db.Integer)
+    csv_data = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 

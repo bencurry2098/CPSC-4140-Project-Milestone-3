@@ -59,8 +59,6 @@ def run_quiz(parent_window, user_id):
         for button in answer_buttons:
             button.pack_forget()
             
-        # Upload results to backend
-        upload_quiz(user_id, total_score, quiz_object.num_questions)
         results_path = os.path.join(DATA_DIRECTORY, "quiz_results.csv")
 
         # Save results to CSV
@@ -69,6 +67,13 @@ def run_quiz(parent_window, user_id):
             # Write header then data
             writer.writerow(["Question", "Your Answer", "Correct Answer", "Correct?"])
             writer.writerows(answer_records)
+
+        # Read CSV content into string for upload
+        with open(results_path, "r") as csv_file:
+            csv_content = csv_file.read()
+
+        # Upload results to backend
+        upload_quiz(user_id, total_score, quiz_object.num_questions, csv_content)
 
         # Display final score and results path
         tk.Label(quiz_window, text=f"Score: {total_score}/{quiz_object.num_questions}",

@@ -6,7 +6,7 @@ from frontend.tracking_test import run_target_tracking
 from frontend.balance_test import run_balance_game
 from frontend.typing_test import run_typing_test
 from frontend.quiz import run_quiz
-from frontend.api_client import register_user
+from frontend.api_client import get_quiz_csv, register_user
 from app.config import Config
 import os
 import csv
@@ -38,6 +38,18 @@ def main():
             return
         # Register user and get user ID
         user_id = register_user(username)
+        
+        # Get the user's quiz results CSV files
+        user_csv_data = get_quiz_csv(user_id)
+        # Save the CSV data locally if it exists
+        if user_csv_data and "csv_data" in user_csv_data:
+            csv_path = os.path.join(DATA_DIR, "quiz_results.csv")
+            # Write the CSV string to file
+            with open(csv_path, "w", newline="") as csvfile:
+                csvfile.write(user_csv_data["csv_data"])
+            print(f"Quiz results loaded and saved to {csv_path}")
+        else:
+            print("No quiz data found for this user.")
 
         # Clear main window
         for widget in main_window.winfo_children():
