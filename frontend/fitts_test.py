@@ -220,7 +220,7 @@ def run_fitts_test(root, user_id, mode="normal"):
             "Fitts' Law Results",
             f"{msg}\nAverage time: {avg_time:.2f} ms\n\nData saved to:\n{csv_name}"
         )
-        show_learn_popup(win, "fitts")
+        show_learn_popup(win, "fitts", mode)
 
     def close_test():
         end_experiment()

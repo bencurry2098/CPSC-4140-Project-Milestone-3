@@ -2,7 +2,7 @@ import tkinter as tk
 from app.config import Config
 
 
-def show_learn_popup(root, test_type):
+def show_learn_popup(root, test_type, mode="normal"):
     """Show educational popup after each test with consistent styling."""
     popup = tk.Toplevel(root)
     popup.title("Learn More")
@@ -34,8 +34,8 @@ def show_learn_popup(root, test_type):
         pady=5
     )
     text_box.pack(padx=10, pady=(0, 15))
-    text_box.insert("1.0", get_learn_text(test_type))
-    text_box.config(state="disabled")  # make read-only
+    text_box.insert("1.0", get_learn_text(test_type, mode))
+    text_box.config(state="disabled")
 
     # --- Close button ---
     tk.Button(
@@ -53,15 +53,45 @@ def show_learn_popup(root, test_type):
     center_window(popup, root)
 
 
-def get_learn_text(test_type):
-    """Return educational content for each test."""
+def get_learn_text(test_type, mode="normal"):
+    """Return educational content for each test and impairment level."""
     if test_type == "fitts":
+        if mode == "normal":
+            return (
+                "In the normal condition, there are no simulated impairments. "
+                "Your movements reflect baseline coordination, allowing accurate "
+                "and quick targeting without delay or instability."
+            )
+
+        elif mode == "mild":
+            return (
+                "The mild impairment introduces a slight delay and hand jitter, "
+                "mimicking how low levels of alcohol cause slowed reaction time "
+                "and minor tremors. Users often experience reduced precision and "
+                "slower corrective motion, similar to early-stage intoxication."
+            )
+
+        elif mode == "moderate":
+            return (
+                "The moderate impairment adds more jitter and occasional reversed movements. "
+                "This models mid-level intoxication, where alcohol begins to disrupt "
+                "the brain’s coordination pathways and spatial perception. "
+                "Reaching accurately becomes inconsistent, and overcorrection increases."
+            )
+
+        elif mode == "severe":
+            return (
+                "The severe condition introduces visual ghosting, motion sway, and heavy input delay. "
+                "This reflects high-level intoxication where perception, reaction, and fine motor control "
+                "are all impaired. Visual double images and delayed responses make accurate targeting "
+                "extremely difficult, similar to late-stage inebriation."
+            )
+
+        # fallback for unexpected mode
         return (
-            "Fitts’ Law describes how movement speed and accuracy are affected by target size "
-            "and distance. After alcohol consumption, fine motor control and reaction time slow down, "
-            "causing users to take longer to accurately hit smaller or distant targets. "
-            "This models how alcohol impairs tasks requiring coordination—like steering a vehicle "
-            "or using small controls on a dashboard."
+            "Fitts’ Law describes how movement time depends on target size and distance. "
+            "Alcohol slows both reaction time and precision, causing longer response durations "
+            "as impairment severity increases."
         )
 
     elif test_type == "tracking":
