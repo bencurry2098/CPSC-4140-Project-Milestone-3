@@ -231,6 +231,6 @@ def run_fitts_test(root, user_id, impairment_level="normal"):
 
     canvas.bind("<Button-1>", handle_click)
     messagebox.showinfo("How to Play", "Click on the blue circle")
-    win.lift()
-    win.focus_force()
+    window.lift()
+    window.focus_force()
     start_countdown()
