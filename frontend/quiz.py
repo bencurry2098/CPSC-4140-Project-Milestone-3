@@ -6,107 +6,146 @@ from tkinter.scrolledtext import ScrolledText
 from frontend.api_client import upload_quiz
 from app.models import QuizQuestion, Quiz
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
-os.makedirs(DATA_DIR, exist_ok=True)
+# Create data directory if it doesn't exist
+DATA_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+os.makedirs(DATA_DIRECTORY, exist_ok=True)
 
-QUESTION_JSON_PATH = os.path.join(os.getcwd(), 'assets', 'quiz_question_data.json')
+# Path to quiz questions JSON file
+QUESTION_FILE_PATH = os.path.join(os.getcwd(), 'assets', 'quiz_question_data.json')
 
+# Run the quiz GUI
+def run_quiz(parent_window, user_id):
+    # Load questions
+    with open(QUESTION_FILE_PATH, 'r') as file:
+        question_data = json.load(file)
+        quiz_object = Quiz([QuizQuestion(q['prompt'], q['choices'], q['answer']) for q in question_data])
 
-def run_quiz(root, user_id):
-    with open(QUESTION_JSON_PATH, 'r') as f:
-        question_data = json.load(f)
-        questions = Quiz([QuizQuestion(q['prompt'], q['choices'], q['answer']) for q in question_data])
+    # Create quiz window
+    quiz_window = tk.Toplevel(parent_window)
+    quiz_window.title("Alcohol Knowledge Quiz")
+    total_score = 0
+    answer_records = []
 
-    win = tk.Toplevel(root)
-    win.title("Alcohol Knowledge Quiz")
-    score = 0
-    results = []
-
-    question_label = tk.Label(win, text="", wraplength=400, font=("Helvetica", 12))
+    # GUI elements
+    question_label = tk.Label(quiz_window, text="", wraplength=400, font=("Helvetica", 12))
     question_label.pack(pady=10)
-    var = tk.IntVar()
+    selected_choice = tk.IntVar()
 
-    buttons = [tk.Radiobutton(win, variable=var, value=i, font=("Helvetica", 11)) for i in range(3)]
-    for b in buttons:
-        b.pack(anchor="w")
+    # Answer radio buttons
+    answer_buttons = [tk.Radiobutton(quiz_window, variable=selected_choice, value=i, font=("Helvetica", 11)) for i in range(3)]
+    for button in answer_buttons:
+        button.pack(anchor="w")
 
-    next_button = tk.Button(win, text="Next", font=("Helvetica", 11))
+    # Next button
+    next_button = tk.Button(quiz_window, text="Next", font=("Helvetica", 11))
     next_button.pack(pady=10)
 
-    def show_current():
-        q = questions.current_question()
-        question_label.config(text=q.prompt)
-        for i, b in enumerate(buttons):
-            b.config(text=q.choices[i])
-        var.set(-1)
+    # Display the current question
+    def display_current_question():
+        current_question = quiz_object.current_question()
+        question_label.config(text=current_question.prompt)
+        # Update answer choices
+        for i, button in enumerate(answer_buttons):
+            button.config(text=current_question.choices[i])
+        # Reset selected choice
+        selected_choice.set(-1)
 
-    def finish():
+    # Finish the quiz and save results
+    def finish_quiz():
+        # Unmap question elements
+        question_label.pack_forget()
         next_button.pack_forget()
-        upload_quiz(user_id, score, questions.num_questions)
-        csv_name = os.path.join(DATA_DIR, "quiz_results.csv")
-        with open(csv_name, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Question", "Your Answer", "Correct Answer", "Correct?"])
-            writer.writerows(results)
+        # Unmap answer buttons
+        for button in answer_buttons:
+            button.pack_forget()
+            
+        # Upload results to backend
+        upload_quiz(user_id, total_score, quiz_object.num_questions)
+        results_path = os.path.join(DATA_DIRECTORY, "quiz_results.csv")
 
-        tk.Label(win, text=f"Score: {score}/{questions.num_questions}",
+        # Save results to CSV
+        with open(results_path, "w", newline="") as csv_file:
+            writer = csv.writer(csv_file)
+            # Write header then data
+            writer.writerow(["Question", "Your Answer", "Correct Answer", "Correct?"])
+            writer.writerows(answer_records)
+
+        # Display final score and results path
+        tk.Label(quiz_window, text=f"Score: {total_score}/{quiz_object.num_questions}",
                  font=("Helvetica", 12, "bold")).pack(pady=(10, 0))
-        tk.Label(win, text=f"Results saved to {csv_name}",
+        tk.Label(quiz_window, text=f"Results saved to {results_path}",
                  fg="gray", font=("Helvetica", 10)).pack()
 
-        # Buttons
-        tk.Button(win, text="Show Answers", command=lambda: show_answers_window(results),
+        # Show answers button
+        tk.Button(quiz_window, text="Show Answers", command=lambda: show_answers_window(answer_records),
                   bg="#0d6efd", fg="white", relief="flat", font=("Helvetica", 11, "bold"),
                   width=15).pack(pady=10)
 
-        tk.Button(win, text="Retake Quiz", command=lambda: [win.destroy(), run_quiz(root, user_id)],
+        # Retake quiz button
+        tk.Button(quiz_window, text="Retake Quiz", command=lambda: [quiz_window.destroy(), run_quiz(parent_window, user_id)],
                   bg="#6c757d", fg="white", relief="flat", font=("Helvetica", 11), width=15).pack(pady=5)
 
-        tk.Button(win, text="Finish", command=win.destroy,
+        # Finish button
+        tk.Button(quiz_window, text="Finish", command=quiz_window.destroy,
                   bg="#198754", fg="white", relief="flat", font=("Helvetica", 11), width=15).pack(pady=10)
 
-    def next_q():
-        nonlocal score
-        q = questions.current_question()
-        chosen = var.get()
-        if chosen == -1:
-            return  # do nothing if no choice selected
-        correct = q.answer
-        results.append([q.prompt, q.choices[chosen], q.choices[correct], int(q.is_correct(chosen))])
-        if q.is_correct(chosen):
-            score += 1
 
-        questions.next_question()
-        if questions.current_question_index >= questions.num_questions:
-            finish()
+    # Handle next question
+    def handle_next_question():
+        nonlocal total_score
+        current_question = quiz_object.current_question()
+        selected_index = selected_choice.get()
+        # Do nothing if no choice selected
+        if selected_index == -1:
+            return 
+
+        # Record answer
+        correct_index = current_question.answer
+        # Append question, user answer, correct answer, correctness flag
+        answer_records.append([current_question.prompt,
+                               current_question.choices[selected_index],
+                               current_question.choices[correct_index],
+                               int(current_question.is_correct(selected_index))])
+        if current_question.is_correct(selected_index):
+            # Increment score
+            total_score += 1
+
+        # Move to next question or finish  
+        quiz_object.next_question()
+        if quiz_object.current_question_index >= quiz_object.num_questions:
+            finish_quiz()
         else:
-            show_current()
+            display_current_question()
 
+    # Show answers window
     def show_answers_window(results):
-        answers_win = tk.Toplevel(win)
-        answers_win.title("Quiz Answers")
-        answers_win.geometry("700x500")
+        answers_window = tk.Toplevel(quiz_window)
+        answers_window.title("Quiz Answers")
+        answers_window.geometry("700x500")
 
-        tk.Label(answers_win, text="Quiz Answers",
-                 font=("Helvetica", 14, "bold")).pack(pady=10)
+        tk.Label(answers_window, text="Quiz Answers", font=("Helvetica", 14, "bold")).pack(pady=10)
 
-        text_box = ScrolledText(answers_win, wrap="word", font=("Helvetica", 11), width=80, height=25)
-        text_box.pack(padx=10, pady=10, fill="both", expand=True)
+        # Scrollable text area for answers
+        text_area = ScrolledText(answers_window, wrap="word", font=("Helvetica", 11), width=80, height=25)
+        text_area.pack(padx=10, pady=10, fill="both", expand=True)
 
-        for i, row in enumerate(results, 1):
-            q_text, your_ans, correct_ans, correct_flag = row
-            status = "Correct" if correct_flag else "Incorrect"
-            text_box.insert("end", f"Q{i}. {q_text}\n", "bold")
-            text_box.insert("end", f"Your answer: {your_ans}\n")
-            text_box.insert("end", f"Correct answer: {correct_ans}\n")
-            text_box.insert("end", f"Result: {status}\n\n")
+        # Insert each question and answer into the text area
+        for i, record in enumerate(results, 1):
+            question_text, user_answer, correct_answer, correctness_flag = record
+            answer_status = "Correct" if correctness_flag else "Incorrect"
+            text_area.insert("end", f"Q{i}. {question_text}\n", "bold")
+            text_area.insert("end", f"Your answer: {user_answer}\n")
+            text_area.insert("end", f"Correct answer: {correct_answer}\n")
+            text_area.insert("end", f"Result: {answer_status}\n\n")
 
-        text_box.tag_configure("bold", font=("Helvetica", 11, "bold"))
-        text_box.config(state="disabled")
+        text_area.tag_configure("bold", font=("Helvetica", 11, "bold"))
+        text_area.config(state="disabled")
 
-        tk.Button(answers_win, text="Close", command=answers_win.destroy,
+        # Close button
+        tk.Button(answers_window, text="Close", command=answers_window.destroy,
                   bg="#0d6efd", fg="white", relief="flat", font=("Helvetica", 11, "bold"),
                   width=15).pack(pady=10)
 
-    next_button.config(command=next_q)
-    show_current()
+    # Set next button command and display first question
+    next_button.config(command=handle_next_question)
+    display_current_question()

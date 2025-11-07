@@ -3,7 +3,7 @@ from app.config import Config
 
 
 def show_learn_popup(root, test_type, mode="normal"):
-    """Show educational popup after each test with consistent styling."""
+    # Educational popup after each test with consistent styling.
     popup = tk.Toplevel(root)
     popup.title("Learn More")
     popup.configure(bg=Config.BG_COLOR)
@@ -11,7 +11,7 @@ def show_learn_popup(root, test_type, mode="normal"):
     popup.transient(root)
     popup.grab_set()
 
-    # --- Titles ---
+    # Titles
     tk.Label(
         popup,
         text="Understanding Your Results",
@@ -20,7 +20,7 @@ def show_learn_popup(root, test_type, mode="normal"):
         fg=Config.PRIMARY_COLOR
     ).pack(pady=(20, 10))
 
-    # --- Text body depending on test ---
+    # Text body depending on test
     text_box = tk.Text(
         popup,
         wrap="word",
@@ -33,11 +33,14 @@ def show_learn_popup(root, test_type, mode="normal"):
         padx=20,
         pady=5
     )
+    
+    # Insert educational content
     text_box.pack(padx=10, pady=(0, 15))
     text_box.insert("1.0", get_learn_text(test_type, mode))
+    # Disable editing
     text_box.config(state="disabled")
 
-    # --- Close button ---
+    # Close button
     tk.Button(
         popup,
         text="Close",
@@ -48,13 +51,12 @@ def show_learn_popup(root, test_type, mode="normal"):
         relief="flat",
         width=12
     ).pack(pady=10)
-
     popup.update_idletasks()
     center_window(popup, root)
 
 
 def get_learn_text(test_type, mode="normal"):
-    """Return educational content for each test and impairment level."""
+    # Return educational content for each test and impairment level.
     if test_type == "fitts":
         if mode == "normal":
             return (
@@ -130,7 +132,7 @@ def get_learn_text(test_type, mode="normal"):
 
 
 def center_window(window, parent):
-    """Center popup relative to parent window."""
+    # Center popup relative to parent window.
     window.update_idletasks()
     px = parent.winfo_x()
     py = parent.winfo_y()

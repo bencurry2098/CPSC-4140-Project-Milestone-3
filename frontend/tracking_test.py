@@ -4,125 +4,151 @@ from tkinter import messagebox
 from frontend.api_client import upload_test
 from app.config import Config
 
-
-def run_target_tracking(root, user_id, mode="normal"):
-    win = tk.Toplevel(root)
-    win.title(f"Target Tracking Test ({mode.capitalize()})")
-    win.configure(bg=Config.BG_COLOR)
-
-    W, H = Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT
-    canvas = tk.Canvas(win, width=W, height=H, bg="white")
+# Run the target tracking test GUI
+def run_target_tracking(parent_window, user_id, impairment_level="normal"):
+    # Create tracking test window
+    tracking_window = tk.Toplevel(parent_window)
+    tracking_window.title(f"Target Tracking Test ({impairment_level.capitalize()})")
+    tracking_window.configure(bg=Config.BG_COLOR)
+    # Canvas setup
+    canvas_width, canvas_height = Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT
+    canvas = tk.Canvas(tracking_window, width=canvas_width, height=canvas_height, bg="white")
     canvas.pack()
 
-    # --- Mode parameters ---
-    params = {
+    # Mode parameters
+    impairment_parameters = {
         "normal": {"speed": 3, "wobble": 0},
         "mild": {"speed": 3, "wobble": 2},
         "moderate": {"speed": 2.5, "wobble": 5},
         "severe": {"speed": 2, "wobble": 9},
     }
-    speed, wobble = params.get(mode, params["normal"]).values()
+    # Set target parameters based on impairment level
+    target_speed, target_wobble = impairment_parameters.get(impairment_level, impairment_parameters["normal"]).values()
 
+    # Target initial position and velocity
     target_radius = 40
-    cx, cy = W // 2, H // 2
-    dx, dy = random.choice([-1, 1]) * speed, random.choice([-1, 1]) * speed
-    target_id = None  # will be created later
+    target_center_x, target_center_y = canvas_width // 2, canvas_height // 2
+    # Using random.choice to vary initial direction
+    target_velocity_x, target_velocity_y = random.choice([-1, 1]) * target_speed, random.choice([-1, 1]) * target_speed
+    # This will be created later
+    target_shape_id = None 
 
-    duration, time_left = Config.TRACKING_TEST_DURATION, Config.TRACKING_TEST_DURATION
-    timer_label = tk.Label(win, text=f"Time: {time_left}", font=("Helvetica", 12, "bold"),
+    # Test timing
+    _, time_remaining = Config.TRACKING_TEST_DURATION, Config.TRACKING_TEST_DURATION
+    timer_label = tk.Label(tracking_window, text=f"Time: {time_remaining}", font=("Helvetica", 12, "bold"),
                            fg=Config.PRIMARY_COLOR, bg=Config.BG_COLOR)
     timer_label.pack(pady=5)
 
-    tracking_start, mouse_positions = None, []
-    test_running = False
+    # Tracking data
+    test_start_time, recorded_distances = None, []
+    test_is_running = False
 
-    # --- Timer update ---
+    # Timer update
     def update_timer():
-        nonlocal time_left, test_running
-        if not test_running:
+        nonlocal time_remaining, test_is_running
+        if not test_is_running:
             return
-        if time_left > 0:
-            time_left -= 1
-            timer_label.config(text=f"Time: {time_left}")
-            win.after(1000, update_timer)
+        # Decrement time
+        if time_remaining > 0:
+            time_remaining -= 1
+            timer_label.config(text=f"Time: {time_remaining}")
+            tracking_window.after(1000, update_timer)
         else:
             end_test(auto=True)
 
-    # --- Target motion ---
+    # Target motion
     def move_target():
-        nonlocal cx, cy, dx, dy, test_running
-        if not test_running:
+        nonlocal target_center_x, target_center_y, target_velocity_x, target_velocity_y, test_is_running
+        if not test_is_running:
             return
 
-        cx += dx
-        cy += dy
-        if cx - target_radius <= 0 or cx + target_radius >= W:
-            dx *= -1
-        if cy - target_radius <= 0 or cy + target_radius >= H:
-            dy *= -1
+        # Update target position
+        target_center_x += target_velocity_x
+        target_center_y += target_velocity_y
+        # Bounce off walls
+        if target_center_x - target_radius <= 0 or target_center_x + target_radius >= canvas_width:
+            target_velocity_x *= -1
+        if target_center_y - target_radius <= 0 or target_center_y + target_radius >= canvas_height:
+            target_velocity_y *= -1
 
-        wx = random.randint(-wobble, wobble)
-        wy = random.randint(-wobble, wobble)
-        wr = target_radius + random.randint(-wobble // 2, wobble // 2)
+        # Apply wobble
+        wobble_offset_x = random.randint(-target_wobble, target_wobble)
+        wobble_offset_y = random.randint(-target_wobble, target_wobble)
+        adjusted_radius = target_radius + random.randint(-target_wobble // 2, target_wobble // 2)
 
-        canvas.coords(target_id, cx - wr + wx, cy - wr + wy, cx + wr + wx, cy + wr + wy)
-        win.after(30, move_target)
+        # Update target shape position
+        canvas.coords(target_shape_id,
+                      target_center_x - adjusted_radius + wobble_offset_x,
+                      target_center_y - adjusted_radius + wobble_offset_y,
+                      target_center_x + adjusted_radius + wobble_offset_x,
+                      target_center_y + adjusted_radius + wobble_offset_y)
+        # Schedule next movement
+        tracking_window.after(30, move_target)
 
-    # --- Mouse tracking ---
-    def track_mouse(event):
-        if tracking_start:
-            dist = math.dist((event.x, event.y), (cx, cy))
-            mouse_positions.append(dist)
+    # Mouse tracking
+    def record_mouse_position(event):
+        if test_start_time:
+            # Calculate distance from target center and record it
+            distance_from_target = math.dist((event.x, event.y), (target_center_x, target_center_y))
+            recorded_distances.append(distance_from_target)
 
-    canvas.bind("<Motion>", track_mouse)
+    # Bind mouse motion
+    canvas.bind("<Motion>", record_mouse_position)
 
-    # --- Countdown before start ---
-    def start_countdown(sec=3):
+    # Countdown before start
+    def start_countdown(seconds_remaining=3):
         canvas.delete("all")
-        if sec >= 0:
-            canvas.create_text(W / 2, H / 2, text=str(sec), font=("Helvetica", 40))
-            win.after(1000, lambda: start_countdown(sec - 1))
+        # Display countdown
+        if seconds_remaining >= 0:
+            canvas.create_text(canvas_width / 2, canvas_height / 2, text=str(seconds_remaining), font=("Helvetica", 40))
+            tracking_window.after(1000, lambda: start_countdown(seconds_remaining - 1))
         else:
             start_test()
 
-    # --- Start test ---
+    # Start test
     def start_test():
-        nonlocal tracking_start, target_id, test_running
+        nonlocal test_start_time, target_shape_id, test_is_running
+        # Clear canvas and draw target
         canvas.delete("all")
-        target_id = canvas.create_oval(cx - target_radius, cy - target_radius,
-                                       cx + target_radius, cy + target_radius,
-                                       fill="red", outline="")
-        tracking_start = time.time()
-        test_running = True
+        target_shape_id = canvas.create_oval(target_center_x - target_radius, target_center_y - target_radius,
+                                             target_center_x + target_radius, target_center_y + target_radius,
+                                             fill="red", outline="")
+        # Set starting time and state
+        test_start_time = time.time()
+        test_is_running = True
         update_timer()
         move_target()
 
-    # --- End test ---
+    # End test
     def end_test(auto=False):
-        nonlocal test_running
-        if not tracking_start:
+        nonlocal test_is_running
+        if not test_start_time:
             return
-        test_running = False
-        elapsed = time.time() - tracking_start
-        avg_distance = sum(mouse_positions) / len(mouse_positions) if mouse_positions else 0
-        accuracy = max(0, 100 - min(avg_distance / 5, 100))
-        upload_test(user_id, elapsed, accuracy, mode)
+        # Record end time and compute results
+        test_is_running = False
+        total_time_elapsed = time.time() - test_start_time
+        # Compute average distance and accuracy score
+        average_distance = sum(recorded_distances) / len(recorded_distances) if recorded_distances else 0
+        accuracy_score = max(0, 100 - min(average_distance / 5, 100))
+        # Upload results
+        upload_test(user_id, total_time_elapsed, accuracy_score, impairment_level)
 
-        msg = "Time up!" if auto else "Test ended."
+        message_text = "Time up!" if auto else "Test ended."
         messagebox.showinfo(
             "Tracking Results",
-            f"{msg}\nTotal time: {elapsed:.1f}s\nAverage distance: {avg_distance:.1f}px"
+            f"{message_text}\nTotal time: {total_time_elapsed:.1f}s\nAverage distance: {average_distance:.1f}px"
         )
 
         # Show Learn popup before closing
         from frontend.learn_popup import show_learn_popup
-        show_learn_popup(root, "tracking")
+        show_learn_popup(parent_window, "tracking")
 
-        win.destroy()  # Close test window after showing results
+        # Close test window after showing results
+        tracking_window.destroy()
 
-    # --- Controls ---
+    # Controls
     tk.Button(
-        win,
+        tracking_window,
         text="End Test",
         bg=Config.PRIMARY_COLOR,
         fg="white",
@@ -133,6 +159,6 @@ def run_target_tracking(root, user_id, mode="normal"):
 
     # --- Run ---
     messagebox.showinfo("How to Play", "Keep the cursor inside the circle")
-    win.lift()
-    win.focus_force()
+    tracking_window.lift()
+    tracking_window.focus_force()
     start_countdown()
