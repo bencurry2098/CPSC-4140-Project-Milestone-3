@@ -1,5 +1,5 @@
 import tkinter as tk
-import random, time, json, os
+import random, time, json, os, difflib
 from tkinter import messagebox
 from frontend.api_client import upload_test
 from app.config import Config
@@ -58,7 +58,6 @@ def run_typing_test(root, user_id, mode="normal"):
     def maybe_inject(event):
         if len(event.char) != 1 or not event.char.isalpha():
             return
-
         if random.random() >= error_chance:
             return
 
@@ -92,13 +91,10 @@ def run_typing_test(root, user_id, mode="normal"):
 
         elapsed = time.time() - start_time
         typed = entry.get().strip()
-        target_words = text.split()
-        typed_words = typed.split()
 
-        # Word-level accuracy
-        correct_words = sum(1 for a, b in zip(target_words, typed_words) if a == b)
-        total_words = len(target_words)
-        accuracy = (correct_words / total_words) * 100 if total_words > 0 else 0.0
+        # --- Hybrid (sequence-matching) accuracy ---
+        matcher = difflib.SequenceMatcher(None, text.strip(), typed)
+        accuracy = matcher.ratio() * 100
 
         upload_test(user_id, elapsed, accuracy, mode)
         messagebox.showinfo(
@@ -109,8 +105,7 @@ def run_typing_test(root, user_id, mode="normal"):
         from frontend.learn_popup import show_learn_popup
         show_learn_popup(win, "typing")
 
-
-    # Submit button
+    # --- Submit button ---
     tk.Button(
         win,
         text="Submit",
