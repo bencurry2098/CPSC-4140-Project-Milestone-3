@@ -227,4 +227,7 @@ def run_fitts_test(root, user_id, mode="normal"):
         win.destroy()
 
     canvas.bind("<Button-1>", handle_click)
+    messagebox.showinfo("How to Play", "Click on the blue circle")
+    win.lift()
+    win.focus_force()
     start_countdown()

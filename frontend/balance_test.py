@@ -25,7 +25,7 @@ def run_balance_game(root, user_id, mode="normal"):
     gravity, tap_power = levels.get(mode, levels["normal"]).values()
 
     # --- Game state ---
-    angle, score, running = 0, 0, True
+    angle, score, running = 0, 0, False
     fail_limit = 70
     time_left = Config.BALANCE_TEST_DURATION
 
@@ -131,5 +131,10 @@ def run_balance_game(root, user_id, mode="normal"):
     # --- Start game ---
     win.bind("<KeyPress>", on_press)
     draw_bar()
+
+    messagebox.showinfo("How to Play", "Press the right and left arrow keys to balance the bar")
+    win.lift()
+    win.focus_force()
+    running = True
     sway()
     update_timer()

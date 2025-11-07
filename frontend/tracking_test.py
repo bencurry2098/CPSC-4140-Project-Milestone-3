@@ -132,4 +132,7 @@ def run_target_tracking(root, user_id, mode="normal"):
     ).pack(pady=10)
 
     # --- Run ---
+    messagebox.showinfo("How to Play", "Keep the cursor inside the circle")
+    win.lift()
+    win.focus_force()
     start_countdown()

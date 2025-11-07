@@ -104,6 +104,7 @@ def run_typing_test(root, user_id, mode="normal"):
 
         from frontend.learn_popup import show_learn_popup
         show_learn_popup(win, "typing")
+        win.destroy()
 
     # --- Submit button ---
     tk.Button(
@@ -118,3 +119,7 @@ def run_typing_test(root, user_id, mode="normal"):
     ).pack(pady=20)
 
     win.bind("<Return>", lambda event: finish())
+    messagebox.showinfo("How to Play", "Type the words that appear on the screen as quickly as possible")
+    win.lift()
+    win.focus_force()
+    entry.focus_set()
