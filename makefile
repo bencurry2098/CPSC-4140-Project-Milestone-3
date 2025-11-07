@@ -1,7 +1,4 @@
-# =========================================================
 # Makefile for CPSC 4140 Milestone 3 Project
-# Works on Linux, WSL, macOS, and Windows
-# =========================================================
 
 # Detect platform
 ifeq ($(OS),Windows_NT)
@@ -22,9 +19,7 @@ FRONT_DIR := frontend
 REQ_FILE := requirements.txt
 DB_FILE := $(APP_DIR)/database.db
 
-# =========================================================
 # Default target
-# =========================================================
 help:
 	@echo "Available commands:"
 	@echo "  make env          - Create venv and install dependencies"
@@ -35,9 +30,7 @@ help:
 	@echo "  make clean        - Remove temporary and data files"
 	@echo "  make reset-db     - Recreate SQLite database"
 
-# =========================================================
 # Environment setup
-# =========================================================
 env:
 	@echo "Creating virtual environment..."
 	$(PYTHON) -m venv $(VENV)
@@ -45,16 +38,9 @@ env:
 	$(PIP) install --upgrade pip
 	$(PIP) install -r $(REQ_FILE)
 	@echo "Virtual environment created and dependencies installed."
-	@echo ""
-ifeq ($(OS),Windows_NT)
-	@echo "Activate manually with: venv\\Scripts\\activate"
-else
 	@echo "Activate manually with: source venv/bin/activate"
-endif
 
-# =========================================================
 # Run tasks
-# =========================================================
 run:
 	@echo "Starting full system (backend + frontend)..."
 	$(PY) run_all.py
@@ -71,9 +57,7 @@ analyze:
 	@echo "Analyzing Fitts' Law results..."
 	$(PY) analyze_results.py
 
-# =========================================================
 # Maintenance
-# =========================================================
 clean:
 	@echo "Cleaning up temporary files..."
 	@rm -rf __pycache__ */__pycache__ *.pyc *.pyo
