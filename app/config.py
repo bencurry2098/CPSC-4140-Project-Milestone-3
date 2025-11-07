@@ -14,7 +14,7 @@ class Config:
     NUM_TRIALS = 10
 
     # timer durations (seconds)
-    TRACKING_TEST_DURATION = 20
+    TRACKING_TEST_DURATION = 10
     FITTS_TEST_DURATION = 30
     BALANCE_TEST_DURATION = 15
 
