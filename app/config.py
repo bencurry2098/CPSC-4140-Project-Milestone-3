@@ -9,8 +9,8 @@ class Config:
     # --- shared frontend constants ---
     CANVAS_WIDTH = 900
     CANVAS_HEIGHT = 750
-    MIN_TARGET_RADIUS = 20
-    MAX_TARGET_RADIUS = 100
+    MIN_TARGET_RADIUS = 15
+    MAX_TARGET_RADIUS = 50
     NUM_TRIALS = 10
 
     # --- timer durations (seconds) ---
