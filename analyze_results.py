@@ -27,47 +27,6 @@ def safe_load_csv(filename):
         print(f"Error reading {filename}: {e}")
         return None
 
-
-# -------------------------------------------------------------------
-# Fitts' Law Analysis
-# -------------------------------------------------------------------
-def analyze_fitts(filename):
-    print(f"\n=== Analyzing {filename} (Fitts' Law) ===")
-    df = safe_load_csv(filename)
-    if df is None or len(df) < 2:
-        print("Not enough data.")
-        return None
-
-    df = df.dropna()
-    df = df[(df["Distance (px)"] > 0) & (df["Target Size (px)"] > 0)]
-    df["Index of Difficulty (bits)"] = np.log2(2 * df["Distance (px)"] / df["Target Size (px)"] + 1)
-
-    df["ID_rounded"] = df["Index of Difficulty (bits)"].round(2)
-    avg_df = df.groupby("ID_rounded")["Time (ms)"].mean().reset_index()
-    ID, MT = avg_df["ID_rounded"], avg_df["Time (ms)"]
-
-    slope, intercept, r_value, _, _ = linregress(ID, MT)
-    r2 = r_value ** 2
-    print(f"Equation: MT = {intercept:.2f} + {slope:.2f} * ID")
-    print(f"R² = {r2:.3f}")
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.scatter(ID, MT, color="blue", label="Data")
-    ax.plot(ID, intercept + slope * ID, color="red", label="Fit")
-    ax.set_xlabel("Index of Difficulty log₂(2A/W + 1)")
-    ax.set_ylabel("Avg Movement Time (ms)")
-    ax.set_title(f"Fitts' Law — {filename}")
-    ax.legend()
-    ax.grid(True)
-    plt.tight_layout()
-
-    plot_path = os.path.join(DATA_DIR, f"{filename.replace('.csv','')}_plot.png")
-    plt.savefig(plot_path, dpi=300)
-    plt.close(fig)
-    print(f"Saved plot to {plot_path}")
-    return plot_path
-
-
 # -------------------------------------------------------------------
 # Quiz Results Analysis
 # -------------------------------------------------------------------
@@ -110,11 +69,7 @@ if __name__ == "__main__":
     choice = sys.argv[1] if len(sys.argv) > 1 else "all"
     print(f"=== Running Analysis: {choice.upper()} ===")
 
-    if choice in ["fitts", "all"]:
-        for f in list_csv_files():
-            if f.startswith("fitts_"):
-                analyze_fitts(f)
     if choice in ["quiz", "all"]:
         analyze_quiz()
 
-    print("\nAnalysis complete. Plots saved in /data.")
+    print("\nAnalysis complete. Saved in /data.")
