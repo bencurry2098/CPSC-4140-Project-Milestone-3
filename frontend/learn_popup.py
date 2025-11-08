@@ -57,46 +57,7 @@ def show_learn_popup(root, test_type, mode="normal"):
 
 def get_learn_text(test_type, mode="normal"):
     # Return educational content for each test and impairment level.
-    if test_type == "fitts":
-        if mode == "normal":
-            return (
-                "In the normal condition, there are no simulated impairments. "
-                "Your movements reflect baseline coordination, allowing accurate "
-                "and quick targeting without delay or instability."
-            )
-
-        elif mode == "mild":
-            return (
-                "The mild impairment introduces a slight delay and hand jitter, "
-                "mimicking how low levels of alcohol cause slowed reaction time "
-                "and minor tremors. Users often experience reduced precision and "
-                "slower corrective motion, similar to early-stage intoxication."
-            )
-
-        elif mode == "moderate":
-            return (
-                "The moderate impairment adds more jitter and occasional reversed movements. "
-                "This models mid-level intoxication, where alcohol begins to disrupt "
-                "the brain’s coordination pathways and spatial perception. "
-                "Reaching accurately becomes inconsistent, and overcorrection increases."
-            )
-
-        elif mode == "severe":
-            return (
-                "The severe condition introduces visual ghosting, motion sway, and heavy input delay. "
-                "This reflects high-level intoxication where perception, reaction, and fine motor control "
-                "are all impaired. Visual double images and delayed responses make accurate targeting "
-                "extremely difficult, similar to late-stage inebriation."
-            )
-
-        # fallback for unexpected mode
-        return (
-            "Fitts’ Law describes how movement time depends on target size and distance. "
-            "Alcohol slows both reaction time and precision, causing longer response durations "
-            "as impairment severity increases."
-        )
-
-    elif test_type == "tracking":
+    if test_type == "tracking":
         return (
             "The Target Tracking Test simulates the coordination needed to follow moving objects, "
             "similar to maintaining lane position while driving. Alcohol increases involuntary "
