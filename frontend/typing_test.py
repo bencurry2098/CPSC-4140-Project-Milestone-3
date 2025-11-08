@@ -4,7 +4,6 @@ from tkinter import messagebox
 from frontend.api_client import upload_test
 from app.config import Config
 from frontend.learn_popup import show_learn_popup
-from frontend.learn_popup import show_learn_popup
 
 # runs the test and sets the default impairment level to be normal
 def run_typing_test(parent_window, user_id, impairment_level="normal"):
@@ -123,8 +122,7 @@ def run_typing_test(parent_window, user_id, impairment_level="normal"):
             "Typing Test Results",
             f"Accuracy: {typing_accuracy:.1f}%\nTime: {total_time_elapsed:.1f}s"
         )
-
-        show_learn_popup(typing_window, "typing")
+        show_learn_popup(parent_window, "typing")
         typing_window.destroy()
 
     # submit button for when the user is finished typing

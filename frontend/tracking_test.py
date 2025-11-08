@@ -3,6 +3,7 @@ import random, time, math
 from tkinter import messagebox
 from frontend.api_client import upload_test
 from app.config import Config
+from frontend.learn_popup import show_learn_popup
 
 # runs the test and sets the default impairment level to normal
 def run_target_tracking(parent_window, user_id, impairment_level="normal"):
@@ -148,7 +149,6 @@ def run_target_tracking(parent_window, user_id, impairment_level="normal"):
         )
 
         # shows learning popup before closing
-        from frontend.learn_popup import show_learn_popup
         show_learn_popup(parent_window, "tracking")
 
         # closes test window after showing results

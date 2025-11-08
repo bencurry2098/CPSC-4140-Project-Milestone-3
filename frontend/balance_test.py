@@ -3,6 +3,7 @@ from tkinter import messagebox
 import random, math, time
 from frontend.api_client import upload_test
 from app.config import Config
+from frontend.learn_popup import show_learn_popup
 
 # runs the game and sets the default impairment level to be normal
 def run_balance_game(root, user_id, mode="normal"):
@@ -104,7 +105,6 @@ def run_balance_game(root, user_id, mode="normal"):
         accuracy = score / 500
         upload_test(user_id, Config.BALANCE_TEST_DURATION, accuracy, mode)
         messagebox.showinfo("Balance Results", f"Balance accuracy: {accuracy:.1f}")
-        from frontend.learn_popup import show_learn_popup
         show_learn_popup(root, "balance")
         balance_window.destroy()
 
