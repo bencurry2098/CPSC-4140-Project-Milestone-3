@@ -26,7 +26,6 @@ help:
 	@echo "  make run          - Run both backend and frontend"
 	@echo "  make backend      - Run Flask backend only"
 	@echo "  make frontend     - Run Tkinter frontend only"
-	@echo "  make analyze      - Run Fitts' Law results analysis"
 	@echo "  make clean        - Remove temporary and data files"
 	@echo "  make reset-db     - Recreate SQLite database"
 
@@ -52,10 +51,6 @@ backend:
 frontend:
 	@echo "Starting Tkinter frontend..."
 	$(PY) -m $(FRONT_DIR).main
-
-analyze:
-	@echo "Analyzing Fitts' Law results..."
-	$(PY) analyze_results.py
 
 # Maintenance
 clean:
