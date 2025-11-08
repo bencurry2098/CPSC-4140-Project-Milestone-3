@@ -27,17 +27,17 @@ def run_quiz(parent_window, user_id):
     answer_records = []
 
     # GUI elements
-    question_label = tk.Label(quiz_window, text="", wraplength=400, font=("Helvetica", 12))
+    question_label = tk.Label(quiz_window, text="", wraplength=800, font=("Helvetica", 20))
     question_label.pack(pady=10)
     selected_choice = tk.IntVar()
 
     # Answer radio buttons
-    answer_buttons = [tk.Radiobutton(quiz_window, variable=selected_choice, value=i, font=("Helvetica", 11)) for i in range(3)]
+    answer_buttons = [tk.Radiobutton(quiz_window, variable=selected_choice, value=i, font=("Helvetica", 18)) for i in range(3)]
     for button in answer_buttons:
         button.pack(anchor="w")
 
     # Next button
-    next_button = tk.Button(quiz_window, text="Next", font=("Helvetica", 11))
+    next_button = tk.Button(quiz_window, text="Next", font=("Helvetica", 12))
     next_button.pack(pady=10)
 
     # Display the current question
