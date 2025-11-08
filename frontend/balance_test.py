@@ -13,7 +13,7 @@ def run_balance_game(root, user_id, mode="normal"):
     balance_window.focus_set()
 
     # setup inner box for game
-    W, H = 600, 400
+    W, H = Config.CANVAS_WIDTH, Config.CANVAS_WIDTH
     canvas = tk.Canvas(balance_window, width=W, height=H, bg="white")
     canvas.pack()
 
@@ -41,11 +41,12 @@ def run_balance_game(root, user_id, mode="normal"):
     )
     timer_label.pack(pady=5)
 
+    # initializes the reference line and the balance bar
     canvas.create_line(W/2, H/2-70, W/2, H/2+70, width=3, fill="#ccc")
     bar_length = 120
     bar = canvas.create_line(W/2, H/2, W/2, H/2 - bar_length, width=10, fill="blue")
 
-    # creates the bar that will be balanced
+    # redraws the bar based on the angle
     def draw_bar():
         x1, y1 = W/2, H/2
         x2 = x1 + bar_length * math.sin(math.radians(angle))
@@ -55,7 +56,7 @@ def run_balance_game(root, user_id, mode="normal"):
         color = "blue" if tilt < 0.5 else ("orange" if tilt < 0.8 else "red")
         canvas.itemconfig(bar, fill=color)
 
-    # Moves the bar depending on where it is leaning
+    # changes the angle that gets used to redraw the bar
     def sway():
         nonlocal angle, score, running
         if not running:

@@ -24,26 +24,22 @@ def run_target_tracking(parent_window, user_id, impairment_level="normal"):
         "severe": {"speed": 2, "wobble": 9},
     }
 
-    # set target parameters based on impairment level
+    # target variables
     target_speed, target_wobble = impairment_parameters.get(impairment_level, impairment_parameters["normal"]).values()
-
-    # target initial position and velocity
     target_radius = 40
     target_center_x, target_center_y = canvas_width // 2, canvas_height // 2
+    target_shape_id = None
 
-    # using random.choice to vary initial direction
+    # determine a random velocity
     target_velocity_x, target_velocity_y = random.choice([-1, 1]) * target_speed, random.choice([-1, 1]) * target_speed
     
-    # this will be updated later
-    target_shape_id = None 
-
-    # create the timer
+    # displays timer for user to see
     _, time_remaining = Config.TRACKING_TEST_DURATION, Config.TRACKING_TEST_DURATION
     timer_label = tk.Label(tracking_window, text=f"Time: {time_remaining}", font=("Helvetica", 12, "bold"),
                            fg=Config.PRIMARY_COLOR, bg=Config.BG_COLOR)
     timer_label.pack(pady=5)
 
-    # variables for tracking data
+    # variables for tracking results
     test_start_time, recorded_distances = None, []
     test_is_running = False
 
