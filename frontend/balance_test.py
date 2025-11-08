@@ -92,7 +92,6 @@ def run_balance_game(root, user_id, mode="normal"):
             return
         running = False
         messagebox.showwarning("You Fell!", "You lost your balance!")
-        from frontend.learn_popup import show_learn_popup
         show_learn_popup(root, "balance")
         balance_window.destroy()
 
