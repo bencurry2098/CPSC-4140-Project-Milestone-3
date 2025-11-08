@@ -11,17 +11,15 @@ class Config:
     CANVAS_HEIGHT = 750
     MIN_TARGET_RADIUS = 20
     MAX_TARGET_RADIUS = 50
-    NUM_TRIALS = 10
 
     # timer durations (seconds)
     TRACKING_TEST_DURATION = 10
-    FITTS_TEST_DURATION = 30
     BALANCE_TEST_DURATION = 15
 
     # UI theme
     BG_COLOR = "#f8f9fa"
     PRIMARY_COLOR = "#1f77b4"
     ACCENT_COLOR = "#d9534f"
-    FONT_TITLE = ("Helvetica", 18, "bold")
-    FONT_SUBTITLE = ("Helvetica", 14, "bold")
-    FONT_BODY = ("Helvetica", 12)
+    FONT_TITLE = ("Helvetica", 22, "bold")
+    FONT_SUBTITLE = ("Helvetica", 20, "bold")
+    FONT_BODY = ("Helvetica", 16)

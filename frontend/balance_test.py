@@ -35,7 +35,7 @@ def run_balance_game(root, user_id, mode="normal"):
     timer_label = tk.Label(
         balance_window,
         text=f"Time: {time_left}",
-        font=("Helvetica", 12, "bold"),
+        font=("Helvetica", 18, "bold"),
         fg=Config.PRIMARY_COLOR,
         bg=Config.BG_COLOR
     )

@@ -66,7 +66,7 @@ def main():
         def select_impairment(simulation_function, root_window, user_id_value):
             level_window = tk.Toplevel(root_window)
             level_window.title("Select Impairment Level")
-            level_window.geometry("300x250")
+            level_window.geometry("300x400")
             level_window.transient(root_window)
 
             tk.Label(level_window, text="Choose Impairment Level:", font=Config.FONT_BODY).pack(pady=10)
@@ -79,14 +79,14 @@ def main():
                     command=lambda m=mode: [level_window.destroy(), simulation_function(root_window, user_id_value, m)],
                     bg="white",
                     relief="flat",
-                    font=("Helvetica", 11)
+                    font=("Helvetica", 18)
                 ).pack(pady=5)
             if simulation_function == run_target_tracking:
                 tk.Label(
                     level_window,
                     text="Warning: Severe mode includes rapid movement and flashing.\nMay trigger seizures.",
                     fg=Config.ACCENT_COLOR,
-                    font=("Helvetica", 9, "italic"),
+                    font=("Helvetica", 18, "italic"),
                     wraplength=280,
                     justify="left"
                 ).pack(pady=(0, 10))
@@ -99,12 +99,12 @@ def main():
         ]:
             tk.Button(main_window, text=button_text, width=25, height=2,
                       command=lambda f=function_reference: select_impairment(f, main_window, user_id),
-                      bg="white", relief="flat", font=("Helvetica", 11)).pack(pady=5)
+                      bg="white", relief="flat", font=("Helvetica", 18)).pack(pady=5)
         
         # Quiz Button
         tk.Button(main_window, text="Alcohol Knowledge Quiz", width=25, height=2,
                   command=lambda: run_quiz(main_window, user_id),
-                  bg="white", relief="flat", font=("Helvetica", 11)).pack(pady=10)
+                  bg="white", relief="flat", font=("Helvetica", 18)).pack(pady=10)
 
         # Analyze Quiz Results Button
         def analyze_quiz_results():
@@ -131,7 +131,7 @@ def main():
 
         tk.Button(main_window, text="Analyze Quiz Results", width=25, height=2,
                   command=analyze_quiz_results,
-                  bg="white", relief="flat", font=("Helvetica", 11)).pack(pady=5)
+                  bg="white", relief="flat", font=("Helvetica", 18)).pack(pady=5)
 
         # Exit Button
         tk.Button(main_window, text="Exit", command=main_window.destroy, width=25, height=2,
